@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fuentes Conmutadas (SMPS) · Evaluación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF3E7;
+    --paper:#FFF9F0;
+    --copper:#C9622D;
+    --copper-dark:#A84A1E;
+    --amber:#E8A33D;
+    --rust:#8B3A2A;
+    --ink:#3A2318;
+    --ink-soft:#6B5644;
+    --line:#E7D6BB;
+    --ok:#5C7A3D;
+    --bad:#B23A2E;
+    --shadow:rgba(58,35,24,.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 8% 0%, #FFEFD8 0%, transparent 45%),
+      radial-gradient(circle at 100% 100%, #FBE3C8 0%, transparent 40%),
+      var(--cream);
+    min-height:100vh;
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:740px;margin:0 auto;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--copper-dark);
+    font-weight:600;
+    display:flex;align-items:center;gap:8px;
+  }
+  .eyebrow::before{content:"";width:18px;height:2px;background:var(--copper);display:inline-block;}
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:clamp(28px,5vw,40px);
+    line-height:1.08;
+    margin:8px 0 6px;
+    color:var(--ink);
+  }
+  .sub{color:var(--ink-soft);font-size:15px;line-height:1.5;margin:0 0 22px;max-width:60ch;}
+  .warn-line{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--bad);margin:6px 0 2px;}
+
+  .band-strip{display:flex;gap:4px;height:9px;border-radius:5px;overflow:hidden;margin:18px 0 26px;box-shadow:inset 0 0 0 1px var(--shadow);}
+  .band-strip span{flex:1;background:var(--line);transition:background .35s ease;}
+
+  .card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:0 10px 26px -18px var(--shadow), 0 2px 6px -2px var(--shadow);
+    padding:26px 24px;
+  }
+
+  .field{margin-bottom:16px;}
+  label{display:block;font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:6px;}
+  input[type=text]{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:15px;
+    color:var(--ink);
+    outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  input[type=text]:focus{border-color:var(--copper);box-shadow:0 0 0 3px rgba(201,98,45,.16);}
+  .btn{
+    appearance:none;border:none;cursor:pointer;
+    font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:15px;
+    padding:13px 22px;border-radius:10px;
+    background:var(--copper);color:#fff;
+    box-shadow:0 6px 16px -6px rgba(169,74,30,.55);
+    transition:transform .15s, background .2s, box-shadow .15s;
+  }
+  .btn:hover{background:var(--copper-dark);transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
+  .btn:disabled{background:#D8C8B0;color:#8a7a63;box-shadow:none;cursor:not-allowed;transform:none;}
+  .btn.ghost{background:transparent;color:var(--copper-dark);box-shadow:none;border:1.5px solid var(--line);}
+  .btn.ghost:hover{background:#F3E6D2;}
+  .btn.small{padding:8px 14px;font-size:13px;border-radius:8px;}
+
+  .qcard{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-left:6px solid var(--band-color, var(--copper));
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:14px;
+  }
+  .qhead{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;}
+  .qnum{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;color:var(--copper-dark);background:#F3E6D2;padding:3px 8px;border-radius:6px;}
+  .qpts{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);}
+  .qtext{font-weight:600;font-size:15.5px;line-height:1.4;}
+  .opts{display:grid;gap:8px;}
+  .opt{
+    display:flex;align-items:flex-start;gap:10px;
+    padding:10px 12px;border-radius:9px;border:1.5px solid var(--line);
+    cursor:pointer;font-size:14.5px;line-height:1.4;background:#fff;
+    transition:border-color .15s, background .15s;
+  }
+  .opt:hover{border-color:var(--amber);}
+  .opt input{margin-top:3px;accent-color:var(--copper);}
+  .opt.selected{border-color:var(--copper);background:#FDF0E1;}
+
+  .progress-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .progress-label{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .sticky-bar{position:sticky;top:0;background:linear-gradient(var(--cream) 78%, transparent);padding-top:6px;padding-bottom:2px;z-index:5;}
+
+  .hint{font-size:13px;color:var(--bad);margin-top:10px;display:none;}
+
+  .score-wrap{text-align:center;padding:10px 0 6px;}
+  .score-num{font-family:'Fraunces',serif;font-weight:900;font-size:66px;line-height:1;color:var(--copper-dark);}
+  .score-den{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--ink-soft);}
+  .score-nota{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--ink-soft);margin-top:2px;}
+  .score-nota strong{color:var(--copper-dark);font-size:16px;}
+  .score-msg{font-size:15px;color:var(--ink-soft);margin-top:8px;}
+  .review{margin-top:22px;display:grid;gap:8px;}
+  .rrow{display:flex;gap:10px;padding:10px 12px;border-radius:9px;border:1px solid var(--line);font-size:13.5px;background:#fff;}
+  .rrow .mark{font-weight:700;flex:0 0 18px;}
+  .rrow.ok .mark{color:var(--ok);}
+  .rrow.bad .mark{color:var(--bad);}
+
+  .teacher-link{
+    display:block;text-align:center;margin-top:26px;
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);
+    text-decoration:none;opacity:.6;
+  }
+  .teacher-link:hover{opacity:1;}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:16px;}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);}
+  th{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);}
+  td.score{font-weight:700;color:var(--copper-dark);font-family:'IBM Plex Mono',monospace;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+  .hidden{display:none !important;}
+  .footer-note{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="screen-login">
+    <div class="eyebrow">Electrónica · Fuentes de Alimentación</div>
+    <h1>Evaluación: Fuentes Conmutadas (SMPS)</h1>
+    <p class="sub">20 preguntas de opción múltiple, 5 puntos cada una (100 puntos = nota 10). Completá tus datos para empezar.</p>
+    <p class="warn-line">⚠ Una vez que empieces no podés salir de esta pestaña ni minimizar la ventana. Si lo hacés, la evaluación se cierra y se entrega automáticamente con lo que tengas respondido hasta ese momento.</p>
+    <p class="warn-line">📸 Al terminar, sacale una captura de pantalla a tu resultado final y guardala, por las dudas.</p>
+    <div class="band-strip">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="card">
+      <div class="field">
+        <label for="in-nombre">Nombre</label>
+        <input type="text" id="in-nombre" placeholder="Ej: Martina">
+      </div>
+      <div class="field">
+        <label for="in-apellido">Apellido</label>
+        <input type="text" id="in-apellido" placeholder="Ej: Gómez">
+      </div>
+      <div class="field">
+        <label for="in-curso">Curso</label>
+        <input type="text" id="in-curso" placeholder="Ej: 5°1° Electrónica Industrial">
+      </div>
+      <div class="hint" id="login-hint">Completá los tres campos para continuar.</div>
+      <button class="btn" id="btn-start" style="width:100%;margin-top:6px;">Empezar evaluación</button>
+    </div>
+    <a href="#" class="teacher-link" id="link-teacher">⚙ panel docente</a>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="screen-quiz" class="hidden">
+    <div class="sticky-bar">
+      <div class="eyebrow">Evaluación: Fuentes Conmutadas (SMPS)</div>
+      <div class="progress-row">
+        <span class="progress-label" id="progress-label">0 / 20 respondidas</span>
+        <span class="progress-label" id="progress-name"></span>
+      </div>
+      <div class="band-strip" id="quiz-progress"></div>
+      <div class="warn-line">⚠ No salgas de esta pestaña: si lo hacés, la evaluación se cierra sola.</div>
+    </div>
+    <div id="questions-list"></div>
+    <div class="hint" id="quiz-hint">Te faltan preguntas por responder — revisá las marcadas.</div>
+    <button class="btn" id="btn-submit" style="width:100%;margin-top:8px;" disabled>Entregar evaluación</button>
+  </div>
+
+  <!-- RESULT -->
+  <div id="screen-result" class="hidden">
+    <div class="eyebrow">Resultado</div>
+    <div class="card">
+      <div class="score-wrap">
+        <div id="result-name" style="font-weight:600;color:var(--ink-soft);margin-bottom:4px;"></div>
+        <span class="score-num" id="score-num">0</span><span class="score-den">/100</span>
+        <div class="score-nota">Equivale a nota <strong id="score-nota">0</strong>/10</div>
+        <div class="score-msg" id="score-msg"></div>
+      </div>
+      <div class="review" id="review-list"></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <label style="margin-bottom:8px;">Copia de respaldo de tu resultado (opcional)</label>
+      <textarea id="result-text" readonly rows="6" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:13px;padding:12px;border-radius:10px;border:1.5px solid var(--line);background:#fff;color:var(--ink);resize:none;"></textarea>
+      <button class="btn" id="btn-copy" style="width:100%;margin-top:10px;">📋 Copiar resultado</button>
+      <p class="hint" id="copy-ok" style="display:none;color:var(--ok);">✓ Copiado. Ahora pegalo donde le mandes el mensaje a tu docente.</p>
+    </div>
+    <div class="footer-note" id="save-status">Tu resultado ya fue enviado a tu docente. Podés cerrar esta ventana.</div>
+  </div>
+
+  <!-- TEACHER GATE -->
+  <div id="screen-teacher-gate" class="hidden">
+    <div class="eyebrow">Panel docente</div>
+    <h1 style="font-size:26px;">Acceso restringido</h1>
+    <div class="card">
+      <div class="field">
+        <label for="in-passcode">Clave de acceso</label>
+        <input type="text" id="in-passcode" placeholder="Clave docente">
+      </div>
+      <div class="hint" id="passcode-hint">Clave incorrecta.</div>
+      <button class="btn" id="btn-enter-teacher">Ingresar</button>
+      <button class="btn ghost" id="btn-back-login" style="margin-left:8px;">Volver</button>
+    </div>
+  </div>
+
+  <!-- TEACHER PANEL -->
+  <div id="screen-teacher" class="hidden">
+    <div class="eyebrow">Panel docente</div>
+    <h1 style="font-size:26px;">Resultados</h1>
+    <p class="sub">Los resultados se guardan automáticamente en tu planilla de Google Sheets. Abrila para verlos, filtrarlos o exportarlos.</p>
+    <div class="card">
+      <a id="link-open-sheet" href="#" target="_blank" class="btn" style="width:100%;display:block;text-align:center;text-decoration:none;">📊 Abrir planilla de resultados</a>
+      <button class="btn ghost" id="btn-teacher-back" style="width:100%;margin-top:10px;">Volver al inicio</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ---------- Configuración ----------
+const TEACHER_CODE = "smps2026"; // Cambiá esta clave si querés otra
+const SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyYQwVQh5Z1zPKgCT9qrHy4T1xmPXZUxsUPPq0BjGnRCCKWPvJeuwhS0v4nRe_PKqxa/exec";
+const RESULTS_SHEET_URL = "https://docs.google.com/spreadsheets/d/1g86VrVPm6ZxFu1LIjsDf31yMf78DVhmrKVtSgq0BmzU/edit";
+const TEMA = "Fuentes Conmutadas (SMPS)";
+const POINTS_PER_QUESTION = 5;  // 20 preguntas x 5 puntos = 100
+
+// ---------- Preguntas ----------
+const QUESTIONS = [
+  { q:"¿Cuál es el orden correcto de las etapas principales en el diagrama en bloques de una fuente conmutada (SMPS) conectada a la red de CA?", opts:["Transformador de HF → Rectificador de entrada → Filtro EMI → Inversor → Rectificador de salida","Filtro EMI → Rectificador y filtro de entrada → Etapa de conmutación → Transformador de alta frecuencia → Rectificador y filtro de salida","Inversor → Filtro EMI → Rectificador → Lazo de control → Transformador lineal","Rectificador de salida → Inversor → Filtro EMI → Transformador de red (50/60 Hz)"], correct:1 },
+  { q:"¿Cuál es la función principal del Filtro EMI a la entrada de una fuente conmutada?", opts:["Elevar el factor de potencia corrigiendo la distorsión armónica de baja frecuencia","Almacenar energía en forma de campo magnético para evitar caídas de tensión bruscas en la red","Evitar que los ruidos de alta frecuencia generados por la conmutación se propaguen hacia la red eléctrica","Transformar la corriente alterna de la red en corriente continua pulsante"], correct:2 },
+  { q:"¿Qué componentes conforman típicamente la etapa de Rectificación y Filtrado de Entrada en una SMPS conectada a la red de CA?", opts:["Un transformador reductor de 50 Hz, diodos rápidos y condensadores cerámicos pequeños","Un puente rectificador de diodos y un condensador electrolítico de alta tensión y gran capacidad","Un MOSFET de potencia operando en zona lineal y diodos zener de referencia","Un circuito integrado PWM y un optoacoplador de aislamiento"], correct:1 },
+  { q:"¿Qué función cumple el condensador electrolítico principal ubicado después del rectificador de entrada?", opts:["Reducir las pérdidas por conmutación en los diodos de salida","Almacenar energía y proporcionar una tensión de CD con bajo rizado para alimentar la etapa conmutadora","Aislar galvánicamente la salida de la entrada de red","Regular el voltaje de salida ante variaciones de carga"], correct:1 },
+  { q:"¿Cuál es el elemento semiconductor activo fundamental en la etapa de conmutación de una SMPS moderna?", opts:["Transistores bipolares (BJT) polarizados permanentemente en zona lineal","Transistores MOSFET de potencia o IGBTs operando en corte y saturación","Diodos de vacío termoiónicos de alta velocidad","Reguladores lineales serie basados en amplificadores operacionales"], correct:1 },
+  { q:"¿Cuál es la principal ventaja del transformador de alta frecuencia (HF) frente al transformador convencional de red (50/60 Hz)?", opts:["Permite trabajar con corriente continua sin rectificación previa","Su tamaño, peso y volumen se reducen drásticamente al requerir núcleos mucho más pequeños para la misma potencia","Elimina por completo la necesidad de un lazo de control por realimentación","Posee eficiencia de transferencia del 100% sin pérdidas en el núcleo"], correct:1 },
+  { q:"¿Qué función cumple el rectificador y filtro de salida en una fuente conmutada?", opts:["Convierte la alta tensión de red en baja tensión continua antes de entrar al transformador","Genera los pulsos PWM de control para los transistores de potencia","Convierte la CA de alta frecuencia del secundario en CC pulsante y la alisa con filtros LC para entregar tensión continua limpia","Regula la temperatura interna de los disipadores mediante realimentación térmica"], correct:2 },
+  { q:"¿Cuál es la función del circuito de control (Control Loop / PWM) en una fuente conmutada?", opts:["Actuar como fusible electrónico ante cortocircuitos en la entrada de CA","Monitorear la tensión o corriente de salida y modular el ciclo de trabajo de los transistores para mantener la salida estable","Elevar la frecuencia de la red de 50 Hz a 60 Hz","Proteger mecánicamente el gabinete ante sobrecalentamiento"], correct:1 },
+  { q:"Dentro del lazo de control, ¿qué rol cumple específicamente el circuito integrado controlador PWM?", opts:["Reemplaza al conmutador cuando no hay transistor MOSFET disponible","Es el 'cerebro' del lazo: genera los pulsos con el ciclo de trabajo adecuado para comandar la compuerta de los transistores del inversor","Disipa la energía sobrante en forma de calor cuando la carga disminuye","Eleva la frecuencia de la red comercial de 50 Hz a 60 Hz"], correct:1 },
+  { q:"¿Qué componentes se encargan de mantener el aislamiento galvánico entre la etapa primaria (conectada a la red) y la secundaria de baja tensión?", opts:["Un condensador cerámico de alta tensión en paralelo con la carga","Un optoacoplador en el lazo de realimentación y el propio transformador de alta frecuencia","El puente rectificador de entrada de diodos","Los disipadores de aluminio de los transistores MOSFET"], correct:1 },
+  { q:"¿Cuál es la principal ventaja de una SMPS frente a una fuente lineal en términos de eficiencia energética?", opts:["Las SMPS tienen mayor eficiencia (típicamente 80-95%) porque sus transistores operan como interruptores, disipando poca potencia","Las fuentes lineales son más eficientes por operar a frecuencias de red bajas","Las SMPS no generan ningún calor, por lo que su eficiencia es del 100%","La eficiencia de ambas es idéntica, variando solo el costo de fabricación"], correct:0 },
+  { q:"¿Cómo se comparan tamaño y peso de una fuente conmutada frente a una lineal para igual potencia de salida?", opts:["La lineal es mucho más pequeña por la ausencia de filtros EMI","Ambas tienen el mismo tamaño porque los semiconductores ocupan igual volumen","La conmutada es significativamente más pequeña y liviana porque elimina el transformador pesado de 50/60 Hz","La conmutada es más pesada por la cantidad de blindajes magnéticos obligatorios"], correct:2 },
+  { q:"¿Cuál es una desventaja notable de las fuentes conmutadas frente a las lineales?", opts:["Generan ruido e interferencia electromagnética de alta frecuencia que requiere filtros complejos y diseño cuidadoso de PCB","Imposibilidad absoluta de regular la tensión ante cambios de carga","Costo de fabricación extremadamente bajo que compromete la calidad de los materiales","Funcionamiento exclusivo con baterías de corriente continua"], correct:0 },
+  { q:"En cuanto a complejidad de diseño y cantidad de componentes, ¿cómo se comparan las fuentes lineales con las conmutadas?", opts:["Las lineales requieren microcontroladores avanzados y las SMPS solo un transformador y un diodo","Las lineales son circuitos sencillos, mientras que las SMPS requieren control complejo, protección y múltiples etapas de filtrado","Ambas poseen exactamente el mismo grado de complejidad circuital","Las conmutadas no requieren ningún componente activo de control"], correct:1 },
+  { q:"¿Cuál de los siguientes bloques es característico y exclusivo de las fuentes conmutadas, y no está presente en una fuente lineal tradicional?", opts:["El puente rectificador de diodos","El condensador electrolítico de filtrado principal","El circuito conmutador de alta frecuencia con su lazo de control PWM","Los terminales de conexión para la carga de salida"], correct:2 },
+  { q:"¿Cómo se compara la disipación térmica en los elementos reguladores entre una fuente lineal y una SMPS al aumentar la corriente de salida?", opts:["En la lineal, la potencia disipada aumenta linealmente con la corriente y la caída de tensión, requiriendo grandes disipadores; en la SMPS las pérdidas son mucho menores","En ambas la disipación se mantiene exactamente en cero","La SMPS disipa más calor porque sus transistores operan en zona lineal permanente","Las fuentes lineales no generan calor bajo ninguna circunstancia"], correct:0 },
+  { q:"En el contexto de una SMPS, ¿qué es el 'Duty Cycle' (Ciclo de Trabajo)?", opts:["El tiempo que el interruptor permanece cerrado frente al tiempo total del período de conmutación, que regula la transferencia de energía y el nivel de tensión de salida","La cantidad de corriente que el filtro EMI puede soportar antes de fundirse","El tiempo que demora la fuente en tomar la muestra de salida","La frecuencia fija de la red eléctrica comercial"], correct:0 },
+  { q:"¿Cuál de las siguientes afirmaciones describe mejor el concepto de Modulación por Ancho de Pulso (PWM) en el control de una SMPS?", opts:["Se modifica la amplitud del voltaje de entrada de manera analógica y continua","Se varía la frecuencia de conmutación manteniendo el ancho del pulso fijo","Se mantiene una frecuencia de conmutación constante mientras se varía el tiempo en que el interruptor permanece cerrado (duty cycle) respecto al período total","Se desconecta la fuente de la red mediante un relé mecánico a intervalos regulares"], correct:2 },
+  { q:"¿Qué tipo de diodos se utilizan típicamente en el rectificador de salida de una SMPS, y por qué?", opts:["Diodos Schottky o de recuperación rápida, porque deben conmutar a la frecuencia alta del secundario","Diodos zener, porque regulan la tensión de salida por sí solos","Diodos LED, porque indican visualmente el estado de la fuente","Diodos rectificadores estándar de baja velocidad, iguales a los de la entrada de red"], correct:0 },
+  { q:"¿Por qué razón principal las fuentes conmutadas (SMPS) se convirtieron en el estándar de la industria para alimentar dispositivos electrónicos modernos?", opts:["Por su bajo costo de producción en masa, alta eficiencia energética, reducido tamaño/peso y capacidad de operar con amplios rangos de tensión de entrada","Porque emiten ondas electromagnéticas beneficiosas para la salud de los equipos circundantes","Porque no requieren ningún tipo de componente semiconductor activo","Porque su tiempo de vida útil es infinito al no poseer condensadores electrolíticos"], correct:0 }
+];
+
+const BAND_COLORS = ["#8B3A2A","#C9622D","#E8A33D","#D9B23C","#6E8B4A","#4A7A8C","#5B5A8C","#8C4A73","#6B5644","#3A2318"];
+function bandColor(i){ return BAND_COLORS[i % BAND_COLORS.length]; }
+
+let student = { nombre:"", apellido:"", curso:"" };
+let answers = new Array(QUESTIONS.length).fill(-1);
+let quizActive = false;
+let quizLocked = false;
+
+// ---------- Anti-trampa: detectar salida de la pestaña ----------
+document.addEventListener("visibilitychange", ()=>{
+  if(quizActive && document.hidden && !quizLocked){
+    lockQuiz();
+  }
+});
+
+function show(id){
+  ["screen-login","screen-quiz","screen-result","screen-teacher-gate","screen-teacher"].forEach(s=>{
+    document.getElementById(s).classList.toggle("hidden", s!==id);
+  });
+  window.scrollTo({top:0,behavior:"instant"});
+}
+
+document.getElementById("btn-start").addEventListener("click", ()=>{
+  const nombre = document.getElementById("in-nombre").value.trim();
+  const apellido = document.getElementById("in-apellido").value.trim();
+  const curso = document.getElementById("in-curso").value.trim();
+  const hint = document.getElementById("login-hint");
+  if(!nombre || !apellido || !curso){
+    hint.style.display = "block";
+    return;
+  }
+  hint.style.display = "none";
+  student = {nombre, apellido, curso};
+  buildQuiz();
+  document.getElementById("progress-name").textContent = apellido + ", " + nombre;
+  quizActive = true;
+  quizLocked = false;
+  show("screen-quiz");
+});
+
+function buildQuiz(){
+  const list = document.getElementById("questions-list");
+  list.innerHTML = "";
+  const bar = document.getElementById("quiz-progress");
+  bar.innerHTML = "";
+  QUESTIONS.forEach((item, qi)=>{
+    const seg = document.createElement("span");
+    bar.appendChild(seg);
+
+    const card = document.createElement("div");
+    card.className = "qcard";
+    card.style.setProperty("--band-color", bandColor(qi));
+    const head = document.createElement("div");
+    head.className = "qhead";
+    head.innerHTML = `<span class="qnum">P${qi+1}</span><span class="qtext">${item.q}</span><span class="qpts" style="margin-left:auto;">${POINTS_PER_QUESTION} pts</span>`;
+    card.appendChild(head);
+    const opts = document.createElement("div");
+    opts.className = "opts";
+    item.opts.forEach((optText, oi)=>{
+      const label = document.createElement("label");
+      label.className = "opt";
+      label.innerHTML = `<input type="radio" name="q${qi}" value="${oi}"><span>${optText}</span>`;
+      label.querySelector("input").addEventListener("change", ()=>{
+        answers[qi] = oi;
+        [...opts.querySelectorAll(".opt")].forEach(o=>o.classList.remove("selected"));
+        label.classList.add("selected");
+        updateProgress();
+      });
+      opts.appendChild(label);
+    });
+    card.appendChild(opts);
+    list.appendChild(card);
+  });
+  answers = new Array(QUESTIONS.length).fill(-1);
+  updateProgress();
+}
+
+function updateProgress(){
+  const answered = answers.filter(a=>a>=0).length;
+  document.getElementById("progress-label").textContent = answered + " / " + QUESTIONS.length + " respondidas";
+  const bands = document.querySelectorAll("#quiz-progress span");
+  bands.forEach((b,i)=>{
+    b.style.background = answers[i]>=0 ? bandColor(i) : "var(--line)";
+  });
+  document.getElementById("btn-submit").disabled = answered < QUESTIONS.length;
+}
+
+document.getElementById("btn-submit").addEventListener("click", async ()=>{
+  if(answers.some(a=>a<0)){
+    document.getElementById("quiz-hint").style.display = "block";
+    return;
+  }
+  await finishQuiz(false);
+});
+
+function lockQuiz(){
+  if(quizLocked) return;
+  quizLocked = true;
+  quizActive = false;
+  document.querySelectorAll("#questions-list input").forEach(i=>{ i.disabled = true; });
+  document.getElementById("btn-submit").disabled = true;
+  finishQuiz(true);
+}
+
+async function finishQuiz(lockedByLeaving){
+  quizActive = false;
+  let correctCount = 0;
+  QUESTIONS.forEach((item,i)=>{ if(answers[i]===item.correct) correctCount++; });
+  const score = correctCount * POINTS_PER_QUESTION; // sobre 100
+  const nota = (score/10);
+
+  let saveOk = false;
+  let saveError = "";
+  try{
+    const payload = {
+      apellido: student.apellido,
+      nombre: student.nombre,
+      curso: student.curso,
+      tema: TEMA,
+      nota: nota,
+      puntaje: score,
+      cerradoPorSalir: !!lockedByLeaving
+    };
+    await fetch(SHEETS_WEBHOOK_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {"Content-Type": "text/plain;charset=utf-8"},
+      body: JSON.stringify(payload)
+    });
+    saveOk = true; // no-cors no permite leer la respuesta; si no lanzó error, asumimos que salió
+  }catch(e){
+    saveError = (e && e.message) ? e.message : String(e);
+    console.error("No se pudo enviar el resultado a la planilla:", e);
+  }
+
+  renderResult(score, nota, saveOk, saveError, lockedByLeaving);
+  show("screen-result");
+}
+
+function buildResultText(score, nota, lockedByLeaving){
+  const fechaStr = new Date().toLocaleString("es-AR");
+  const lines = [
+    "RESULTADO — Evaluación Fuentes Conmutadas (SMPS)",
+    "Nombre: " + student.nombre,
+    "Apellido: " + student.apellido,
+    "Curso: " + student.curso,
+    "Nota: " + nota + "/10 (" + score + "/100)",
+    "Hora de entrega: " + fechaStr
+  ];
+  if(lockedByLeaving){
+    lines.push("Estado: cerrado automáticamente por salir de la pantalla");
+  }
+  return lines.join("\n");
+}
+
+function renderResult(score, nota, saveOk, saveError, lockedByLeaving){
+  document.getElementById("result-name").textContent = student.nombre + " " + student.apellido + " · " + student.curso;
+  document.getElementById("score-num").textContent = score;
+  document.getElementById("score-nota").textContent = nota;
+
+  const resultText = buildResultText(score, nota, lockedByLeaving);
+  const textarea = document.getElementById("result-text");
+  textarea.value = resultText;
+
+  const status = document.getElementById("save-status");
+  let baseMsg = saveOk
+    ? "✓ Tu resultado ya fue enviado a la planilla de tu docente. Podés cerrar esta ventana."
+    : "⚠ Hubo un problema de conexión al enviar tu resultado. Copiá el texto de arriba y enviaselo a tu docente por las dudas.";
+  if(lockedByLeaving){
+    baseMsg = "⚠ Infracción detectada: saliste de la pantalla durante la evaluación. Se cerró automáticamente con la nota obtenida hasta ese momento. " + baseMsg;
+  }
+  status.textContent = baseMsg;
+  status.style.color = (saveOk && !lockedByLeaving) ? "var(--ok)" : "var(--bad)";
+
+  let msg;
+  if(lockedByLeaving){
+    msg = "Esta evaluación fue cerrada antes de completarse por salir de la pantalla.";
+  } else if(nota >= 9) msg = "Excelente dominio de los conceptos de las fuentes conmutadas.";
+  else if(nota >= 7) msg = "Muy buen resultado, con algunos conceptos para repasar.";
+  else if(nota >= 5) msg = "Vas por buen camino, conviene reforzar algunos temas en clase.";
+  else msg = "Conviene repasar las nociones básicas de las fuentes conmutadas.";
+  document.getElementById("score-msg").textContent = msg;
+
+  const review = document.getElementById("review-list");
+  review.innerHTML = "";
+  QUESTIONS.forEach((item,i)=>{
+    const ok = answers[i]===item.correct;
+    const row = document.createElement("div");
+    row.className = "rrow " + (ok?"ok":"bad");
+    const tuResp = answers[i]>=0 ? item.opts[answers[i]] : "(sin responder)";
+    row.innerHTML = `<span class="mark">${ok?"✓":"✕"}</span><span>P${i+1}. ${item.q}<br><strong>Respuesta correcta:</strong> ${item.opts[item.correct]}${ok?"":" — Tu respuesta: " + tuResp}</span>`;
+    review.appendChild(row);
+  });
+}
+
+document.getElementById("btn-copy").addEventListener("click", async ()=>{
+  const textarea = document.getElementById("result-text");
+  const okMsg = document.getElementById("copy-ok");
+  try{
+    await navigator.clipboard.writeText(textarea.value);
+    okMsg.style.display = "block";
+  }catch(e){
+    textarea.select();
+    textarea.setSelectionRange(0, 99999);
+    try{
+      document.execCommand("copy");
+      okMsg.style.display = "block";
+    }catch(e2){
+      okMsg.style.display = "none";
+      alert("No se pudo copiar automáticamente. El texto ya está seleccionado: usá Ctrl+C (o mantené presionado y elegí Copiar).");
+    }
+  }
+});
+
+document.getElementById("link-teacher").addEventListener("click",(e)=>{  e.preventDefault();
+  show("screen-teacher-gate");
+});
+document.getElementById("btn-back-login").addEventListener("click", ()=>show("screen-login"));
+document.getElementById("btn-enter-teacher").addEventListener("click", ()=>{
+  const val = document.getElementById("in-passcode").value.trim();
+  if(val === TEACHER_CODE){
+    document.getElementById("passcode-hint").style.display = "none";
+    document.getElementById("link-open-sheet").href = RESULTS_SHEET_URL;
+    show("screen-teacher");
+  }else{
+    document.getElementById("passcode-hint").style.display = "block";
+  }
+});
+document.getElementById("btn-teacher-back").addEventListener("click", ()=>show("screen-login"));
+</script>
+</body>
+</html>
