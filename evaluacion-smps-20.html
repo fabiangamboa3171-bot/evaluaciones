@@ -298,6 +298,97 @@ document.addEventListener("visibilitychange", ()=>{
     lockQuiz();
   }
 });
+// Respaldo del anti-trampa: en algunos navegadores, al cerrar la pestaña
+// o navegar hacia otra página, "pagehide" puede dispararse sin que
+// "visibilitychange" llegue a tiempo. Escucharlo también evita que un
+// cierre de pestaña quede sin registrar el intento de entrega.
+window.addEventListener("pagehide", ()=>{
+  if(quizActive && !quizLocked){
+    lockQuiz();
+  }
+});
+
+// ---------- Envío robusto de resultados ----------
+// Antes, el envío se hacía con un simple `fetch` esperado con `await`
+// dentro de un try/catch. El problema: si el evento que dispara el envío
+// es justamente "el alumno cerró/salió de la pestaña", el navegador puede
+// destruir la página (y cortar la conexión de red en curso) antes de que
+// ese fetch termine — sin que el catch llegue siquiera a ejecutarse. Así
+// se perdió un resultado sin dejar rastro ni error.
+//
+// La solución: usar navigator.sendBeacon, que el navegador garantiza que
+// intentará entregar incluso si la página se cierra en el mismo instante
+// (para eso fue diseñado). Como respaldo adicional, se guarda una copia
+// en localStorage antes de intentar el envío, y se reintenta automática-
+// mente la próxima vez que se abra esta página en el mismo navegador.
+const PENDING_KEY = "smps20_pendientes";
+
+function getPendientes(){
+  try{ return JSON.parse(localStorage.getItem(PENDING_KEY) || "[]"); }
+  catch(e){ return []; }
+}
+function setPendientes(list){
+  try{ localStorage.setItem(PENDING_KEY, JSON.stringify(list)); }catch(e){}
+}
+function guardarPendiente(payload){
+  const list = getPendientes();
+  list.push({ payload, ts: Date.now() });
+  setPendientes(list);
+  return list.length - 1;
+}
+function quitarPendiente(idx){
+  const list = getPendientes();
+  if(idx >= 0 && idx < list.length){
+    list.splice(idx, 1);
+    setPendientes(list);
+  }
+}
+
+function enviarResultado(payload){
+  const body = JSON.stringify(payload);
+  let encolado = false;
+  if(navigator.sendBeacon){
+    try{
+      const blob = new Blob([body], {type:"text/plain;charset=utf-8"});
+      encolado = navigator.sendBeacon(SHEETS_WEBHOOK_URL, blob);
+    }catch(e){
+      encolado = false;
+    }
+  }
+  if(!encolado){
+    try{
+      fetch(SHEETS_WEBHOOK_URL, {
+        method: "POST",
+        mode: "no-cors",
+        keepalive: true,
+        headers: {"Content-Type": "text/plain;charset=utf-8"},
+        body: body
+      }).catch(e=>console.error("Envío de respaldo (fetch keepalive) falló:", e));
+      encolado = true;
+    }catch(e){
+      console.error("No se pudo enviar el resultado (sendBeacon y fetch fallaron):", e);
+      encolado = false;
+    }
+  }
+  return encolado;
+}
+
+function flushPendientes(){
+  const list = getPendientes();
+  if(!list.length) return;
+  list.forEach(item => enviarResultado(item.payload));
+  setPendientes([]);
+}
+flushPendientes();
+
+function lockQuiz(){
+  if(quizLocked) return;
+  quizLocked = true;
+  quizActive = false;
+  document.querySelectorAll("#questions-list input").forEach(i=>{ i.disabled = true; });
+  document.getElementById("btn-submit").disabled = true;
+  finishQuiz(true);
+}
 
 function show(id){
   ["screen-login","screen-quiz","screen-result","screen-teacher-gate","screen-teacher"].forEach(s=>{
@@ -379,45 +470,36 @@ document.getElementById("btn-submit").addEventListener("click", async ()=>{
   await finishQuiz(false);
 });
 
-function lockQuiz(){
-  if(quizLocked) return;
-  quizLocked = true;
-  quizActive = false;
-  document.querySelectorAll("#questions-list input").forEach(i=>{ i.disabled = true; });
-  document.getElementById("btn-submit").disabled = true;
-  finishQuiz(true);
-}
-
 async function finishQuiz(lockedByLeaving){
   quizActive = false;
   let correctCount = 0;
   QUESTIONS.forEach((item,i)=>{ if(answers[i]===item.correct) correctCount++; });
-  const score = correctCount * POINTS_PER_QUESTION; // sobre 100
+  const score = correctCount * POINTS_PER_QUESTION;
   const nota = (score/10);
+
+  const payload = {
+    apellido: student.apellido,
+    nombre: student.nombre,
+    curso: student.curso,
+    tema: TEMA,
+    nota: nota,
+    puntaje: score,
+    cerradoPorSalir: !!lockedByLeaving
+  };
+
+  const idxPendiente = guardarPendiente(payload);
 
   let saveOk = false;
   let saveError = "";
   try{
-    const payload = {
-      apellido: student.apellido,
-      nombre: student.nombre,
-      curso: student.curso,
-      tema: TEMA,
-      nota: nota,
-      puntaje: score,
-      cerradoPorSalir: !!lockedByLeaving
-    };
-    await fetch(SHEETS_WEBHOOK_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {"Content-Type": "text/plain;charset=utf-8"},
-      body: JSON.stringify(payload)
-    });
-    saveOk = true; // no-cors no permite leer la respuesta; si no lanzó error, asumimos que salió
+    saveOk = enviarResultado(payload);
+    if(!saveOk) saveError = "No se pudo encolar el envío (sendBeacon y fetch fallaron).";
   }catch(e){
     saveError = (e && e.message) ? e.message : String(e);
     console.error("No se pudo enviar el resultado a la planilla:", e);
   }
+
+  if(saveOk) quitarPendiente(idxPendiente);
 
   renderResult(score, nota, saveOk, saveError, lockedByLeaving);
   show("screen-result");
