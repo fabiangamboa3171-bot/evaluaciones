@@ -465,32 +465,37 @@
     };
   }
 
+  // IMPORTANTE: el valor que devuelve navigator.sendBeacon() sólo confirma que
+  // el navegador ACEPTÓ encolar el envío, no que el servidor lo haya recibido.
+  // Por eso el respaldo en localStorage NUNCA se borra automáticamente acá:
+  // se reintenta cada vez que se vuelve a abrir esta página en el mismo
+  // dispositivo/navegador, hasta que el docente confirme que la fila llegó
+  // a la planilla. Enviar de más nunca es un problema (se usa la primera fila).
   function sendResult(payload){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); }catch(e){}
+    attemptSend(payload);
+  }
 
+  function attemptSend(payload){
     var json = JSON.stringify(payload);
-    var sent = false;
+    // Intento 1: sendBeacon — sobrevive aunque la pestaña se cierre justo después.
     try{
       if(navigator.sendBeacon){
         var blob = new Blob([json], {type:"application/json"});
-        sent = navigator.sendBeacon(WEBHOOK_URL, blob);
+        navigator.sendBeacon(WEBHOOK_URL, blob);
       }
-    }catch(e){ sent = false; }
-
-    if(!sent){
-      try{
-        fetch(WEBHOOK_URL, {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: json,
-          keepalive:true
-        }).then(function(){
-          try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
-        }).catch(function(){ /* queda en localStorage para reintentar */ });
-      }catch(e){ /* queda en localStorage para reintentar */ }
-    } else {
-      try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
-    }
+    }catch(e){ /* seguimos con el intento 2 igual */ }
+    // Intento 2 (redundante, no depende del primero): fetch en modo no-cors,
+    // evita el preflight de CORS que bloquea un fetch normal contra Apps Script.
+    try{
+      fetch(WEBHOOK_URL, {
+        method:"POST",
+        mode:"no-cors",
+        headers:{"Content-Type":"text/plain;charset=UTF-8"},
+        body: json,
+        keepalive:true
+      }).catch(function(){ /* queda en localStorage para reintentar */ });
+    }catch(e){ /* queda en localStorage para reintentar */ }
   }
 
   function retryPendingSubmission(){
@@ -499,14 +504,7 @@
     if(!pending) return;
     try{
       var payload = JSON.parse(pending);
-      fetch(WEBHOOK_URL, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify(payload),
-        keepalive:true
-      }).then(function(){
-        try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
-      }).catch(function(){});
+      attemptSend(payload);
     }catch(e){}
   }
 
