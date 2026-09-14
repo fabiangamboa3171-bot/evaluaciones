@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluación: Transistores BJT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#fbf3e7;
+    --cream-2:#f3e6d2;
+    --copper:#b5651d;
+    --copper-dark:#8a4a12;
+    --amber:#d98324;
+    --ink:#3a2a1a;
+    --ink-soft:#6b5643;
+    --ok:#2f7d4f;
+    --bad:#b6412c;
+    --card:#fffaf2;
+    --border:#e4cfa9;
+    --shadow: 0 10px 30px rgba(90,55,15,0.12);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #fff6e8 0%, transparent 60%),
+      radial-gradient(1000px 700px at 110% 10%, #f7e4c3 0%, transparent 55%),
+      var(--cream);
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 16px 80px;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; margin:0 0 8px; color:var(--copper-dark);}
+  .card{
+    width:100%;
+    max-width:720px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    padding:32px 28px;
+  }
+  .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-size:12px;
+    font-weight:600;
+    color:var(--amber);
+    margin-bottom:6px;
+  }
+  p.lead{color:var(--ink-soft); line-height:1.5;}
+  label{display:block; font-weight:600; font-size:14px; margin:16px 0 6px; color:var(--ink);}
+  input[type=text]{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1.5px solid var(--border);
+    background:#fff;
+    font-size:15px;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  input[type=text]:focus{outline:2px solid var(--amber); border-color:var(--amber);}
+  .warn-box{
+    margin-top:20px;
+    padding:14px 16px;
+    background:#fdece3;
+    border:1px solid #f0c39f;
+    border-radius:12px;
+    font-size:13.5px;
+    color:#7a3a1a;
+    line-height:1.5;
+  }
+  .btn{
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+    font-weight:700;
+    font-size:15px;
+    padding:13px 22px;
+    border-radius:12px;
+    background:linear-gradient(180deg, var(--amber), var(--copper));
+    color:#fff8ee;
+    box-shadow:0 6px 16px rgba(180,90,20,.35);
+  }
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .btn.secondary{
+    background:#fff;
+    color:var(--copper-dark);
+    border:1.5px solid var(--border);
+    box-shadow:none;
+  }
+  .btn-row{display:flex; gap:10px; margin-top:22px; justify-content:flex-end;}
+  #app{width:100%; max-width:760px; display:flex; flex-direction:column; align-items:center; gap:18px;}
+
+  /* progress bar de "bandas de resistor" */
+  .progress-wrap{width:100%; max-width:720px;}
+  .progress-track{
+    display:flex;
+    gap:3px;
+    height:14px;
+    border-radius:8px;
+    overflow:hidden;
+    background:#eee1c9;
+    border:1px solid var(--border);
+  }
+  .progress-band{flex:1; background:#eee1c9; transition:background .25s ease;}
+  .progress-label{font-size:12.5px; color:var(--ink-soft); margin-top:6px; text-align:right;}
+
+  .q-meta{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;}
+  .q-index{font-size:13px; font-weight:700; color:var(--amber); text-transform:uppercase; letter-spacing:.08em;}
+  .q-points{font-size:13px; color:var(--ink-soft);}
+  .q-text{font-size:19px; font-weight:600; line-height:1.4; margin:10px 0 20px; color:var(--ink);}
+  .option{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:14px 16px;
+    border:1.5px solid var(--border);
+    border-radius:12px;
+    margin-bottom:10px;
+    cursor:pointer;
+    background:#fff;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .option:hover{border-color:var(--amber);}
+  .option.selected{border-color:var(--copper); background:#fdf1de;}
+  .option input{accent-color:var(--copper); margin-top:3px;}
+  .option-text{font-size:15px; line-height:1.4;}
+
+  #lock-overlay{
+    position:fixed; inset:0; background:rgba(58,42,26,.92);
+    display:none; align-items:center; justify-content:center; z-index:999; padding:20px;
+  }
+  #lock-overlay .card{max-width:480px; text-align:center; border-color:var(--bad);}
+  #lock-overlay h2{color:var(--bad);}
+
+  .score-hero{
+    text-align:center;
+    padding:18px 0 6px;
+  }
+  .score-num{font-family:'Fraunces', serif; font-size:64px; font-weight:700; color:var(--copper-dark); line-height:1;}
+  .score-sub{color:var(--ink-soft); margin-top:4px;}
+  .status-pill{
+    display:inline-block; margin-top:10px; padding:6px 14px; border-radius:999px;
+    font-size:12.5px; font-weight:700; letter-spacing:.03em;
+  }
+  .status-ok{background:#e2f3e8; color:var(--ok);}
+  .status-bad{background:#fbe4de; color:var(--bad);}
+
+  table.review{width:100%; border-collapse:collapse; margin-top:20px; font-size:13.5px;}
+  table.review th, table.review td{text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); vertical-align:top;}
+  table.review th{color:var(--ink-soft); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em;}
+  .ans-ok{color:var(--ok); font-weight:600;}
+  .ans-bad{color:var(--bad); font-weight:600;}
+
+  textarea#backup-text{
+    width:100%; min-height:110px; margin-top:14px; padding:10px 12px;
+    border-radius:10px; border:1.5px solid var(--border); font-family:'IBM Plex Sans',monospace; font-size:12.5px;
+    color:var(--ink-soft); resize:vertical;
+  }
+
+  footer{
+    margin-top:28px; text-align:center; font-size:12px; color:#b79f7d;
+  }
+  footer a{color:#b79f7d; text-decoration:underline; cursor:pointer;}
+  #teacher-tag{
+    display:none; margin-top:14px; padding:8px 12px; border-radius:10px;
+    background:#fdf1de; border:1px dashed var(--copper); color:var(--copper-dark);
+    font-size:12.5px; font-weight:600; text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- PANTALLA DE BLOQUEO POR REINTENTO (alumno que ya rindió en este dispositivo) -->
+  <div class="card" id="already-done-screen" style="display:none;">
+    <div class="eyebrow">Evaluación · Electrónica Industrial</div>
+    <h1>Ya registramos tu entrega</h1>
+    <p class="lead">Este dispositivo/navegador ya registró una entrega de esta evaluación (normal o por salir de
+    pantalla). No se puede volver a rendir desde aquí. Si creés que esto es un error, avisale a tu docente
+    directamente — no recargues ni intentes de nuevo por tu cuenta.</p>
+  </div>
+
+  <!-- PANTALLA DE LOGIN -->
+  <div class="card" id="login-screen">
+    <div class="eyebrow">Evaluación · Electrónica Industrial</div>
+    <h1>Transistores BJT</h1>
+    <p class="lead">10 preguntas de opción múltiple · 1 punto cada una · 10 puntos = nota 10.</p>
+
+    <label for="in-apellido">Apellido</label>
+    <input type="text" id="in-apellido" autocomplete="off" placeholder="Ej: Gómez">
+
+    <label for="in-nombre">Nombre</label>
+    <input type="text" id="in-nombre" autocomplete="off" placeholder="Ej: Martina">
+
+    <label for="in-curso">Curso</label>
+    <input type="text" id="in-curso" autocomplete="off" placeholder="Ej: 5°8°">
+
+    <div class="warn-box">
+      <strong>Importante:</strong> una vez que empieces, no podés salir ni minimizar esta pestaña.
+      Si cambiás de pestaña, minimizás la ventana o cerrás el navegador, la evaluación se cierra
+      automáticamente y se entrega con las respuestas marcadas hasta ese momento.
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" id="btn-start" onclick="startQuiz()">Comenzar evaluación</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA DEL EXAMEN -->
+  <div id="quiz-screen" style="display:none; width:100%; max-width:720px;">
+    <div class="progress-wrap">
+      <div class="progress-track" id="progress-track"></div>
+      <div class="progress-label" id="progress-label">Pregunta 1 de 10</div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <div class="q-meta">
+        <span class="q-index" id="q-index">Pregunta 1</span>
+        <span class="q-points">1 punto</span>
+      </div>
+      <div class="q-text" id="q-text"></div>
+      <div id="q-options"></div>
+      <div class="btn-row">
+        <button class="btn" id="btn-next" onclick="nextQuestion()" disabled>Siguiente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA DE RESULTADO -->
+  <div id="result-screen" style="display:none; width:100%; max-width:720px;">
+    <div class="card">
+      <div class="score-hero">
+        <div class="eyebrow">Resultado</div>
+        <div class="score-num" id="score-nota">-</div>
+        <div class="score-sub" id="score-detalle">- / 10 puntos</div>
+        <div id="status-pill-wrap"></div>
+      </div>
+      <table class="review" id="review-table">
+        <thead>
+          <tr><th>#</th><th>Pregunta</th><th>Tu respuesta</th><th>Correcta</th></tr>
+        </thead>
+        <tbody id="review-body"></tbody>
+      </table>
+      <label for="backup-text" style="margin-top:18px;">Texto de respaldo (podés copiarlo como comprobante)</label>
+      <textarea id="backup-text" readonly></textarea>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="copyBackupText()">Copiar comprobante</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Sistema de evaluación interactiva · Electrónica Industrial
+    <div><a onclick="openTeacherPanel()">Acceso docente</a></div>
+    <div id="teacher-tag">Modo docente activo: sin bloqueo por salida ni envío a la planilla.</div>
+  </footer>
+
+</div>
+
+<!-- OVERLAY DE BLOQUEO POR SALIDA -->
+<div id="lock-overlay">
+  <div class="card">
+    <h2>Evaluación cerrada</h2>
+    <p class="lead">Detectamos que saliste de esta pantalla o cambiaste de pestaña. La evaluación se cerró
+    automáticamente y se envió con las respuestas marcadas hasta ese momento.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ======= CONFIGURACIÓN =======
+  var WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyYQwVQh5Z1zPKgCT9qrHy4T1xmPXZUxsUPPq0BjGnRCCKWPvJeuwhS0v4nRe_PKqxa/exec";
+  var TEMA = "Transistores BJT";
+  var HOJA_DESTINO = "BJT";
+  var STORAGE_KEY = "pendiente_transistores_bjt_v1";
+  var COMPLETED_KEY = "completado_transistores_bjt_v1";
+  var TEACHER_PASSWORD = "bjt2026";
+
+  // Bandas estilo código de colores de resistencias (0-9), se repiten cada 10 preguntas
+  var RESISTOR_COLORS = ["#000000","#8a4a12","#d9362e","#f2871f","#f2c12e","#3f9142","#2f6fd9","#7c3aed","#8a8a8a","#f5efe3"];
+
+  var questions = [
+    {q:"¿Qué es un transistor BJT (Bipolar Junction Transistor)?",
+     options:["Un dispositivo de dos terminales que solo conduce corriente en un sentido","Un dispositivo semiconductor de tres terminales capaz de controlar una corriente mediante otra corriente de menor magnitud","Un componente pasivo que almacena energía en un campo eléctrico","Una resistencia variable controlada por temperatura"], correct:1},
+    {q:"¿Cuáles son los tres terminales de un transistor BJT?",
+     options:["Ánodo, cátodo y compuerta","Positivo, negativo y neutro","Base, Colector y Emisor","Drenador, fuente y compuerta"], correct:2},
+    {q:"En un transistor NPN, ¿cómo están dispuestas sus regiones semiconductoras (de emisor a colector)?",
+     options:["N-P-N","P-N-P","N-N-P","P-P-N"], correct:0},
+    {q:"¿Cuál es el portador de carga mayoritario en un material semiconductor tipo-p?",
+     options:["Electrones","Huecos","Protones","Iones positivos"], correct:1},
+    {q:"¿En qué región de operación se dice que un BJT se comporta, idealmente, como un interruptor abierto (corriente de colector ≈ 0)?",
+     options:["Región activa","Región de ruptura","Corte","Saturación"], correct:2},
+    {q:"Para un transistor de silicio, ¿qué valor aproximado de tensión base-emisor (VBE) se utiliza como referencia didáctica para considerar la unión polarizada en directa?",
+     options:["0,3 V","0,7 V","5 V","12 V"], correct:1},
+    {q:"En la familia de curvas características de salida de un BJT (IC en función de VCE), ¿qué ocurre con la corriente de colector IC en la región activa cuando aumenta la corriente de base IB?",
+     options:["IC disminuye proporcionalmente","IC permanece constante, sin importar IB","IC aumenta, ya que en la región activa depende fuertemente de IB","IC se vuelve negativa"], correct:2},
+    {q:"Si un transistor tiene β = 100 e IB = 0,2 mA, ¿cuál es aproximadamente IC en la región activa (IC = β·IB)?",
+     options:["0,2 mA","2 mA","20 mA","200 mA"], correct:2},
+    {q:"Cuando se utiliza un BJT como interruptor electrónico, ¿qué par de estados de funcionamiento se emplea?",
+     options:["Región activa y ruptura","Corte (OFF) y saturación (ON)","Únicamente la región activa","Corte y ruptura"], correct:1},
+    {q:"En un inversor de emisor común con un transistor NPN, si la entrada está en un nivel bajo (0) y el transistor queda en corte, ¿qué ocurre en la salida?",
+     options:["Queda en un nivel alto, porque casi no circula corriente de colector","Queda en un nivel bajo","Oscila entre alto y bajo","Queda indefinida siempre"], correct:0}
+  ];
+
+  var PUNTOS_POR_PREGUNTA = 1;
+
+  var state = {
+    apellido:"", nombre:"", curso:"",
+    current:0,
+    answers:new Array(questions.length).fill(null),
+    started:false,
+    finished:false,
+    modoDocente:false
+  };
+
+  // ======= LOGIN / INICIO =======
+  window.startQuiz = function(){
+    var apellido = document.getElementById("in-apellido").value.trim();
+    var nombre = document.getElementById("in-nombre").value.trim();
+    var curso = document.getElementById("in-curso").value.trim();
+    if(!apellido || !nombre || !curso){
+      alert("Completá apellido, nombre y curso antes de empezar.");
+      return;
+    }
+    state.apellido = apellido;
+    state.nombre = nombre;
+    state.curso = curso;
+    state.started = true;
+
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("quiz-screen").style.display = "block";
+
+    buildProgressTrack();
+    renderQuestion();
+  };
+
+  function buildProgressTrack(){
+    var track = document.getElementById("progress-track");
+    track.innerHTML = "";
+    for(var i=0;i<questions.length;i++){
+      var band = document.createElement("div");
+      band.className = "progress-band";
+      band.id = "band-"+i;
+      track.appendChild(band);
+    }
+  }
+
+  function updateProgress(){
+    for(var i=0;i<questions.length;i++){
+      var band = document.getElementById("band-"+i);
+      if(!band) continue;
+      band.style.background = (i <= state.current) ? RESISTOR_COLORS[i % 10] : "#eee1c9";
+    }
+    document.getElementById("progress-label").textContent =
+      "Pregunta " + (state.current+1) + " de " + questions.length;
+  }
+
+  // ======= RENDER DE PREGUNTAS =======
+  function renderQuestion(){
+    var idx = state.current;
+    var qData = questions[idx];
+    document.getElementById("q-index").textContent = "Pregunta " + (idx+1);
+    document.getElementById("q-text").textContent = qData.q;
+    updateProgress();
+
+    var wrap = document.getElementById("q-options");
+    wrap.innerHTML = "";
+    qData.options.forEach(function(optText, i){
+      var opt = document.createElement("label");
+      opt.className = "option" + (state.answers[idx]===i ? " selected" : "");
+      opt.innerHTML =
+        '<input type="radio" name="opt" ' + (state.answers[idx]===i ? "checked" : "") + '>' +
+        '<span class="option-text"></span>';
+      opt.querySelector(".option-text").textContent = optText;
+      opt.addEventListener("click", function(){ selectAnswer(i); });
+      wrap.appendChild(opt);
+    });
+
+    var btnNext = document.getElementById("btn-next");
+    btnNext.disabled = (state.answers[idx] === null);
+    btnNext.textContent = (idx === questions.length-1) ? "Finalizar evaluación" : "Siguiente";
+  }
+
+  window.selectAnswer = function(i){
+    state.answers[state.current] = i;
+    renderQuestion();
+  };
+
+  window.nextQuestion = function(){
+    if(state.answers[state.current] === null) return;
+    if(state.current < questions.length - 1){
+      state.current++;
+      renderQuestion();
+    } else {
+      finishQuiz(false);
+    }
+  };
+
+  // ======= PUNTAJE =======
+  function computeScore(){
+    var correctas = 0;
+    for(var i=0;i<questions.length;i++){
+      if(state.answers[i] === questions[i].correct) correctas++;
+    }
+    var puntaje = correctas * PUNTOS_POR_PREGUNTA; // 1 punto c/u, maximo 10
+    var nota = puntaje; // 10 puntos = nota 10, escala directa
+    return {correctas:correctas, puntaje:puntaje, nota:nota};
+  }
+
+  // ======= ANTI-SALIDA =======
+  function lockQuiz(){
+    document.getElementById("lock-overlay").style.display = "flex";
+    document.getElementById("quiz-screen").style.display = "none";
+  }
+
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden && state.started && !state.finished && !state.modoDocente){
+      lockQuiz();
+      finishQuiz(true);
+    }
+  });
+
+  window.addEventListener("pagehide", function(){
+    if(state.started && !state.finished && !state.modoDocente){
+      lockQuiz();
+      finishQuiz(true);
+    }
+  });
+
+  // ======= ENVÍO DE RESULTADOS =======
+  function buildPayload(cerradoPorSalir){
+    var score = computeScore();
+    return {
+      apellido: state.apellido,
+      nombre: state.nombre,
+      curso: state.curso,
+      tema: TEMA,
+      hoja: HOJA_DESTINO,
+      nota: score.nota,
+      puntaje: score.puntaje,
+      cerradoPorSalir: !!cerradoPorSalir
+    };
+  }
+
+  // IMPORTANTE: el valor que devuelve navigator.sendBeacon() sólo confirma que
+  // el navegador ACEPTÓ encolar el envío, no que el servidor lo haya recibido.
+  // Por eso el respaldo en localStorage NUNCA se borra automáticamente acá:
+  // se reintenta cada vez que se vuelve a abrir esta página en el mismo
+  // dispositivo/navegador, hasta que el docente confirme que la fila llegó
+  // a la planilla. Enviar de más nunca es un problema (se usa la primera fila).
+  function sendResult(payload){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); }catch(e){}
+    attemptSend(payload);
+  }
+
+  function attemptSend(payload){
+    var json = JSON.stringify(payload);
+    // Intento 1: sendBeacon — sobrevive aunque la pestaña se cierre justo después.
+    try{
+      if(navigator.sendBeacon){
+        var blob = new Blob([json], {type:"application/json"});
+        navigator.sendBeacon(WEBHOOK_URL, blob);
+      }
+    }catch(e){ /* seguimos con el intento 2 igual */ }
+    // Intento 2 (redundante, no depende del primero): fetch en modo no-cors,
+    // evita el preflight de CORS que bloquea un fetch normal contra Apps Script.
+    try{
+      fetch(WEBHOOK_URL, {
+        method:"POST",
+        mode:"no-cors",
+        headers:{"Content-Type":"text/plain;charset=UTF-8"},
+        body: json,
+        keepalive:true
+      }).catch(function(){ /* queda en localStorage para reintentar */ });
+    }catch(e){ /* queda en localStorage para reintentar */ }
+  }
+
+  function retryPendingSubmission(){
+    var pending;
+    try{ pending = localStorage.getItem(STORAGE_KEY); }catch(e){ pending = null; }
+    if(!pending) return;
+    try{
+      var payload = JSON.parse(pending);
+      attemptSend(payload);
+    }catch(e){}
+  }
+
+  // ======= FINALIZAR Y MOSTRAR RESULTADO =======
+  function finishQuiz(cerradoPorSalir){
+    if(state.finished) return;
+    state.finished = true;
+
+    // Bloqueo persistente: se marca ANTES de intentar el envío, para que recargar
+    // o reabrir esta página en el mismo dispositivo no permita un segundo intento
+    // (normal o por haber salido de pantalla) sin que el docente lo autorice.
+    if(!state.modoDocente){
+      try{ localStorage.setItem(COMPLETED_KEY, "1"); }catch(e){}
+    }
+
+    var payload = buildPayload(cerradoPorSalir);
+    if(!state.modoDocente){
+      sendResult(payload);
+    }
+    showResult(payload, cerradoPorSalir);
+  }
+
+  function showResult(payload, cerradoPorSalir){
+    document.getElementById("quiz-screen").style.display = "none";
+    document.getElementById("lock-overlay").style.display = "none";
+    document.getElementById("result-screen").style.display = "block";
+
+    document.getElementById("score-nota").textContent = payload.nota;
+    document.getElementById("score-detalle").textContent = payload.puntaje + " / 10 puntos";
+
+    var pillWrap = document.getElementById("status-pill-wrap");
+    pillWrap.innerHTML = "";
+    var pill = document.createElement("span");
+    if(cerradoPorSalir){
+      pill.className = "status-pill status-bad";
+      pill.textContent = "Cerrado por salir de la pantalla";
+    } else {
+      pill.className = "status-pill status-ok";
+      pill.textContent = "Entregado normalmente";
+    }
+    pillWrap.appendChild(pill);
+
+    var body = document.getElementById("review-body");
+    body.innerHTML = "";
+    questions.forEach(function(qData, i){
+      var tr = document.createElement("tr");
+      var tuResp = state.answers[i]===null ? "(sin responder)" : qData.options[state.answers[i]];
+      var correcta = qData.options[qData.correct];
+      var esCorrecta = state.answers[i] === qData.correct;
+      tr.innerHTML =
+        "<td>" + (i+1) + "</td>" +
+        "<td>" + escapeHtml(qData.q) + "</td>" +
+        '<td class="' + (esCorrecta ? "ans-ok" : "ans-bad") + '">' + escapeHtml(tuResp) + "</td>" +
+        "<td>" + escapeHtml(correcta) + "</td>";
+      body.appendChild(tr);
+    });
+
+    var fecha = new Date().toLocaleString("es-AR");
+    var texto =
+      "EVALUACIÓN: " + TEMA + "\n" +
+      "Alumno/a: " + payload.apellido + ", " + payload.nombre + "\n" +
+      "Curso: " + payload.curso + "\n" +
+      "Nota: " + payload.nota + " / 10  (" + payload.puntaje + " / 10 puntos)\n" +
+      "Estado: " + (cerradoPorSalir ? "Cerrado por salir de la pantalla" : "Entregado normalmente") + "\n" +
+      "Fecha: " + fecha;
+    document.getElementById("backup-text").value = texto;
+  }
+
+  window.copyBackupText = function(){
+    var ta = document.getElementById("backup-text");
+    ta.select();
+    ta.setSelectionRange(0, 999999);
+    try{
+      document.execCommand("copy");
+      alert("Comprobante copiado.");
+    }catch(e){
+      alert("No se pudo copiar automáticamente. Copiá el texto manualmente.");
+    }
+  };
+
+  function escapeHtml(str){
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ======= PANEL DOCENTE (modo prueba, sin envío ni bloqueo) =======
+  window.openTeacherPanel = function(){
+    var clave = prompt("Clave de acceso docente:");
+    if(clave === null) return;
+    if(clave === TEACHER_PASSWORD){
+      state.modoDocente = true;
+      document.getElementById("teacher-tag").style.display = "block";
+      // El modo docente también resetea el bloqueo local, para poder probar
+      // la evaluación las veces que haga falta desde este mismo dispositivo.
+      try{ localStorage.removeItem(COMPLETED_KEY); }catch(e){}
+      try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+      state.finished = false;
+      state.started = false;
+      state.current = 0;
+      state.answers = new Array(questions.length).fill(null);
+      document.getElementById("already-done-screen").style.display = "none";
+      document.getElementById("result-screen").style.display = "none";
+      document.getElementById("quiz-screen").style.display = "none";
+      document.getElementById("login-screen").style.display = "block";
+      alert("Modo docente activado: se reinició el bloqueo local para que puedas probar la evaluación. No se bloqueará por salir de pantalla ni se enviarán resultados a la planilla mientras esté activo.");
+    } else {
+      alert("Clave incorrecta.");
+    }
+  };
+
+  // Si este dispositivo/navegador ya registró una entrega, no deja arrancar de nuevo.
+  function checkAlreadyCompleted(){
+    var done;
+    try{ done = localStorage.getItem(COMPLETED_KEY); }catch(e){ done = null; }
+    if(done){
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("already-done-screen").style.display = "block";
+      return true;
+    }
+    return false;
+  }
+
+  // Reintentar envíos pendientes de sesiones anteriores en este mismo navegador
+  checkAlreadyCompleted();
+  retryPendingSubmission();
+
+})();
+</script>
+</body>
+</html>
