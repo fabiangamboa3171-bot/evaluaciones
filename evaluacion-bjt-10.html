@@ -351,7 +351,10 @@
     function limpiar(){
       var s = document.getElementById("jsonp-validar-codigo");
       if(s && s.parentNode) s.parentNode.removeChild(s);
-      try{ window[cbName] = undefined; delete window[cbName]; }catch(e){}
+      // No borramos window[cbName]: si la respuesta llega tarde (el script de
+      // Google puede tardar en "despertar" si estuvo inactivo), lo dejamos
+      // como no-op en vez de eliminarlo, para no lanzar un ReferenceError.
+      try{ window[cbName] = function(){}; }catch(e){}
     }
 
     var timeoutId = setTimeout(function(){
@@ -361,7 +364,7 @@
       btn.disabled = false;
       msg.style.color = "var(--bad)";
       msg.textContent = "No se pudo validar (revisá tu conexión a internet). Probá de nuevo.";
-    }, 12000);
+    }, 25000);
 
     window[cbName] = function(resp){
       if(terminado) return;
