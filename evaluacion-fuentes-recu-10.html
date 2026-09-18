@@ -346,8 +346,14 @@
     btn.disabled = true;
 
     var MAX_INTENTOS = 3;
+    var TIMEOUT_MS = 20000;
 
     function intentar(numIntento){
+      msg.style.color = "var(--ink-soft)";
+      msg.textContent = numIntento > 1
+        ? "Validando código... (intento " + numIntento + " de " + MAX_INTENTOS + ")"
+        : "Validando código...";
+
       var cbName = "cbValidarCodigo_" + Date.now() + "_" + numIntento;
       var terminado = false;
 
@@ -357,14 +363,22 @@
         try{ window[cbName] = function(){}; }catch(e){}
       }
 
+      function reintentarOFallar(){
+        limpiar();
+        if(numIntento < MAX_INTENTOS){
+          setTimeout(function(){ intentar(numIntento + 1); }, 900 * numIntento);
+          return;
+        }
+        btn.disabled = false;
+        msg.style.color = "var(--bad)";
+        msg.textContent = "No se pudo conectar para validar el código después de " + MAX_INTENTOS + " intentos. Revisá tu conexión a internet (o probá con datos móviles / otro WiFi) y volvé a intentar en unos segundos.";
+      }
+
       var timeoutId = setTimeout(function(){
         if(terminado) return;
         terminado = true;
-        limpiar();
-        btn.disabled = false;
-        msg.style.color = "var(--bad)";
-        msg.textContent = "No se pudo validar (revisá tu conexión a internet). Probá de nuevo.";
-      }, 25000);
+        reintentarOFallar();
+      }, TIMEOUT_MS);
 
       window[cbName] = function(resp){
         if(terminado) return;
@@ -398,14 +412,7 @@
         if(terminado) return;
         terminado = true;
         clearTimeout(timeoutId);
-        limpiar();
-        if(numIntento < MAX_INTENTOS){
-          setTimeout(function(){ intentar(numIntento + 1); }, 900 * numIntento);
-          return;
-        }
-        btn.disabled = false;
-        msg.style.color = "var(--bad)";
-        msg.textContent = "No se pudo conectar para validar el código. Si estás dentro de WhatsApp u otra app, abrí este enlace en Chrome o Safari y volvé a intentar.";
+        reintentarOFallar();
       };
       document.body.appendChild(script);
     }
