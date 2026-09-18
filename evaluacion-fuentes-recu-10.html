@@ -345,65 +345,72 @@
     msg.textContent = "Validando código...";
     btn.disabled = true;
 
-    var cbName = "cbValidarCodigo_" + Date.now();
-    var terminado = false;
+    var MAX_INTENTOS = 3;
 
-    function limpiar(){
-      var s = document.getElementById("jsonp-validar-codigo");
-      if(s && s.parentNode) s.parentNode.removeChild(s);
-      // No borramos window[cbName]: si la respuesta llega tarde (el script de
-      // Google puede tardar en "despertar" si estuvo inactivo), lo dejamos
-      // como no-op en vez de eliminarlo, para no lanzar un ReferenceError.
-      try{ window[cbName] = function(){}; }catch(e){}
+    function intentar(numIntento){
+      var cbName = "cbValidarCodigo_" + Date.now() + "_" + numIntento;
+      var terminado = false;
+
+      function limpiar(){
+        var s = document.getElementById("jsonp-validar-codigo");
+        if(s && s.parentNode) s.parentNode.removeChild(s);
+        try{ window[cbName] = function(){}; }catch(e){}
+      }
+
+      var timeoutId = setTimeout(function(){
+        if(terminado) return;
+        terminado = true;
+        limpiar();
+        btn.disabled = false;
+        msg.style.color = "var(--bad)";
+        msg.textContent = "No se pudo validar (revisá tu conexión a internet). Probá de nuevo.";
+      }, 25000);
+
+      window[cbName] = function(resp){
+        if(terminado) return;
+        terminado = true;
+        clearTimeout(timeoutId);
+        limpiar();
+        btn.disabled = false;
+        if(!resp || !resp.valido){
+          msg.style.color = "var(--bad)";
+          msg.textContent = "Código no encontrado. Revisalo bien antes de volver a intentar, o avisale a tu docente.";
+          return;
+        }
+        if(resp.usado && !resp.especial){
+          msg.style.color = "var(--bad)";
+          msg.textContent = "Este código ya fue usado para entregar esta evaluación. Si creés que es un error, avisale a tu docente.";
+          return;
+        }
+        msg.style.display = "none";
+        alumnoValidado = resp;
+        alumnoValidado.codigo = codigo;
+        document.getElementById("codigo-step").style.display = "none";
+        document.getElementById("confirm-step").style.display = "block";
+        document.getElementById("confirm-box").textContent =
+          "Alumno/a: " + resp.apellido + ", " + resp.nombre + " — Curso: " + resp.curso + ". Si no sos vos, tocá \"No soy yo\".";
+      };
+
+      var script = document.createElement("script");
+      script.id = "jsonp-validar-codigo";
+      script.src = WEBHOOK_URL + "?accion=validar_codigo&codigo=" + encodeURIComponent(codigo) + "&callback=" + cbName;
+      script.onerror = function(){
+        if(terminado) return;
+        terminado = true;
+        clearTimeout(timeoutId);
+        limpiar();
+        if(numIntento < MAX_INTENTOS){
+          setTimeout(function(){ intentar(numIntento + 1); }, 900 * numIntento);
+          return;
+        }
+        btn.disabled = false;
+        msg.style.color = "var(--bad)";
+        msg.textContent = "No se pudo conectar para validar el código. Si estás dentro de WhatsApp u otra app, abrí este enlace en Chrome o Safari y volvé a intentar.";
+      };
+      document.body.appendChild(script);
     }
 
-    var timeoutId = setTimeout(function(){
-      if(terminado) return;
-      terminado = true;
-      limpiar();
-      btn.disabled = false;
-      msg.style.color = "var(--bad)";
-      msg.textContent = "No se pudo validar (revisá tu conexión a internet). Probá de nuevo.";
-    }, 25000);
-
-    window[cbName] = function(resp){
-      if(terminado) return;
-      terminado = true;
-      clearTimeout(timeoutId);
-      limpiar();
-      btn.disabled = false;
-      if(!resp || !resp.valido){
-        msg.style.color = "var(--bad)";
-        msg.textContent = "Código no encontrado. Revisalo bien antes de volver a intentar, o avisale a tu docente.";
-        return;
-      }
-      if(resp.usado && !resp.especial){
-        msg.style.color = "var(--bad)";
-        msg.textContent = "Este código ya fue usado para entregar esta evaluación. Si creés que es un error, avisale a tu docente.";
-        return;
-      }
-      msg.style.display = "none";
-      alumnoValidado = resp;
-      alumnoValidado.codigo = codigo;
-      document.getElementById("codigo-step").style.display = "none";
-      document.getElementById("confirm-step").style.display = "block";
-      document.getElementById("confirm-box").textContent =
-        "Alumno/a: " + resp.apellido + ", " + resp.nombre + " — Curso: " + resp.curso + ". Si no sos vos, tocá \"No soy yo\".";
-    };
-
-    var script = document.createElement("script");
-    script.id = "jsonp-validar-codigo";
-    script.src = WEBHOOK_URL + "?accion=validar_codigo&codigo=" + encodeURIComponent(codigo) + "&callback=" + cbName;
-    script.onerror = function(){
-      if(terminado) return;
-      terminado = true;
-      clearTimeout(timeoutId);
-      limpiar();
-      btn.disabled = false;
-      msg.style.color = "var(--bad)";
-      msg.textContent = "No se pudo conectar para validar el código. Probá de nuevo.";
-    };
-    document.body.appendChild(script);
+    intentar(1);
   };
 
   window.cambiarCodigo = function(){
