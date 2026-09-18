@@ -340,14 +340,15 @@
 
     var msg = document.getElementById("codigo-msg");
     var btn = document.getElementById("btn-validar");
-    msg.style.display = "block";
-    msg.style.color = "var(--ink-soft)";
-    msg.textContent = "Validando código...";
     btn.disabled = true;
 
     var MAX_INTENTOS = 3;
 
     function intentar(numIntento){
+      msg.style.display = "block";
+      msg.style.color = "var(--ink-soft)";
+      msg.textContent = numIntento === 1 ? "Validando código..." : "Validando código... (intento " + numIntento + " de " + MAX_INTENTOS + ")";
+
       var cbName = "cbValidarCodigo_" + Date.now() + "_" + numIntento;
       var terminado = false;
 
@@ -357,14 +358,22 @@
         try{ window[cbName] = function(){}; }catch(e){}
       }
 
+      function reintentarOFallar(msgFinal){
+        if(numIntento < MAX_INTENTOS){
+          setTimeout(function(){ intentar(numIntento + 1); }, 700);
+          return;
+        }
+        btn.disabled = false;
+        msg.style.color = "var(--bad)";
+        msg.textContent = msgFinal;
+      }
+
       var timeoutId = setTimeout(function(){
         if(terminado) return;
         terminado = true;
         limpiar();
-        btn.disabled = false;
-        msg.style.color = "var(--bad)";
-        msg.textContent = "No se pudo validar (revisá tu conexión a internet). Probá de nuevo.";
-      }, 25000);
+        reintentarOFallar("No se pudo validar (revisá tu conexión a internet). Probá de nuevo, o si estás dentro de WhatsApp u otra app, abrí este enlace en Chrome o Safari.");
+      }, 20000);
 
       window[cbName] = function(resp){
         if(terminado) return;
@@ -399,13 +408,7 @@
         terminado = true;
         clearTimeout(timeoutId);
         limpiar();
-        if(numIntento < MAX_INTENTOS){
-          setTimeout(function(){ intentar(numIntento + 1); }, 900 * numIntento);
-          return;
-        }
-        btn.disabled = false;
-        msg.style.color = "var(--bad)";
-        msg.textContent = "No se pudo conectar para validar el código. Si estás dentro de WhatsApp u otra app, abrí este enlace en Chrome o Safari y volvé a intentar.";
+        reintentarOFallar("No se pudo conectar para validar el código. Si estás dentro de WhatsApp u otra app, abrí este enlace en Chrome o Safari y volvé a intentar.");
       };
       document.body.appendChild(script);
     }
