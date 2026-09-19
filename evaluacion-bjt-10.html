@@ -209,6 +209,22 @@
       <div id="codigo-msg" style="display:none; margin-top:12px; font-size:13.5px; font-weight:600;"></div>
     </div>
 
+    <div id="manual-step" style="display:none;">
+      <div class="warn-box" style="background:#fdece3; border-color:#f0c39f; color:#7a3a1a;">
+        Si tu conexión sigue sin validar el código, podés completar tus datos y continuar igual —
+        tu docente va a confirmar el código más tarde con la planilla.
+      </div>
+      <label for="in-apellido-manual">Apellido</label>
+      <input type="text" id="in-apellido-manual" autocomplete="off" placeholder="Tu apellido">
+      <label for="in-nombre-manual">Nombre</label>
+      <input type="text" id="in-nombre-manual" autocomplete="off" placeholder="Tu nombre">
+      <label for="in-curso-manual">Curso</label>
+      <input type="text" id="in-curso-manual" autocomplete="off" placeholder="Ej: 5to 10ma">
+      <div class="btn-row">
+        <button class="btn" id="btn-continuar-manual" onclick="continuarSinValidar()">Continuar sin validar</button>
+      </div>
+    </div>
+
     <div id="confirm-step" style="display:none;">
       <div class="warn-box" id="confirm-box" style="background:#e2f3e8; border-color:#bfe3cc; color:#215c37;"></div>
       <div class="warn-box">
@@ -371,7 +387,8 @@
         }
         btn.disabled = false;
         msg.style.color = "var(--bad)";
-        msg.textContent = "No se pudo conectar para validar el código después de " + MAX_INTENTOS + " intentos. Revisá tu conexión a internet (o probá con datos móviles / otro WiFi) y volvé a intentar en unos segundos.";
+        msg.textContent = "No se pudo conectar para validar el código después de " + MAX_INTENTOS + " intentos. Revisá tu conexión a internet (o probá con datos móviles / otro WiFi), o completá tus datos abajo para continuar sin validar.";
+        document.getElementById("manual-step").style.display = "block";
       }
 
       var timeoutId = setTimeout(function(){
@@ -426,6 +443,41 @@
     document.getElementById("codigo-msg").style.display = "none";
     document.getElementById("confirm-step").style.display = "none";
     document.getElementById("codigo-step").style.display = "block";
+    document.getElementById("manual-step").style.display = "none";
+    document.getElementById("in-apellido-manual").value = "";
+    document.getElementById("in-nombre-manual").value = "";
+    document.getElementById("in-curso-manual").value = "";
+    var cbReset = document.getElementById("confirm-box");
+    cbReset.style.background = "#e2f3e8"; cbReset.style.borderColor = "#bfe3cc"; cbReset.style.color = "#215c37";
+  };
+
+  // ======= CONTINUAR SIN VALIDAR (respaldo si falla la conexión) =======
+  window.continuarSinValidar = function(){
+    var codigo = document.getElementById("in-codigo").value.trim();
+    var apellido = document.getElementById("in-apellido-manual").value.trim();
+    var nombre = document.getElementById("in-nombre-manual").value.trim();
+    var curso = document.getElementById("in-curso-manual").value.trim();
+    if(!apellido || !nombre || !curso){
+      alert("Completá apellido, nombre y curso para continuar.");
+      return;
+    }
+    alumnoValidado = {
+      apellido: apellido,
+      nombre: nombre,
+      curso: curso,
+      especial: false,
+      usado: false,
+      validado: false
+    };
+    alumnoValidado.codigo = codigo || "(sin código)";
+    document.getElementById("codigo-msg").style.display = "none";
+    document.getElementById("manual-step").style.display = "none";
+    document.getElementById("codigo-step").style.display = "none";
+    document.getElementById("confirm-step").style.display = "block";
+    var cb = document.getElementById("confirm-box");
+    cb.style.background = "#fdf1de"; cb.style.borderColor = "#e4cfa9"; cb.style.color = "#7a3a1a";
+    cb.textContent =
+      "Alumno/a: " + apellido + ", " + nombre + " — Curso: " + curso + " (código no verificado por conexión). Si no sos vos, tocá \"No soy yo\".";
   };
 
   // ======= LOGIN / INICIO =======
@@ -436,6 +488,7 @@
     state.curso = alumnoValidado.curso;
     state.codigo = alumnoValidado.codigo;
     state.especial = !!alumnoValidado.especial;
+    state.validado = (alumnoValidado.validado !== false);
     state.started = true;
 
     document.getElementById("login-screen").style.display = "none";
@@ -546,6 +599,7 @@
       nombre: state.nombre,
       curso: state.curso,
       codigo: state.codigo,
+      validado: state.validado,
       tema: TEMA,
       hoja: HOJA_DESTINO,
       nota: score.nota,
@@ -656,6 +710,7 @@
       "EVALUACIÓN: " + TEMA + "\n" +
       "Alumno/a: " + payload.apellido + ", " + payload.nombre + "\n" +
       "Curso: " + payload.curso + "\n" +
+      "Código verificado: " + (payload.validado === false ? "No (confirmar con el/la docente)" : "Sí") + "\n" +
       "Nota: " + payload.nota + " / 10  (" + payload.puntaje + " / 10 puntos)\n" +
       "Estado: " + (cerradoPorSalir ? "Cerrado por salir de la pantalla" : "Entregado normalmente") + "\n" +
       "Fecha: " + fecha;
@@ -700,6 +755,7 @@
       document.getElementById("confirm-step").style.display = "none";
       document.getElementById("in-codigo").value = "";
       document.getElementById("codigo-msg").style.display = "none";
+      document.getElementById("manual-step").style.display = "none";
       document.getElementById("already-done-screen").style.display = "none";
       document.getElementById("result-screen").style.display = "none";
       document.getElementById("quiz-screen").style.display = "none";
