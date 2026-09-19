@@ -677,8 +677,13 @@
     // Bloqueo persistente: se marca ANTES de intentar el envío, para que recargar
     // o reabrir esta página en el mismo dispositivo no permita un segundo intento
     // (normal o por haber salido de pantalla) sin que el docente lo autorice.
+    // Se guarda si esta entrega fue validada en línea o no (ver checkAlreadyCompleted):
+    // una entrega SIN validar (respaldo manual) bloquea el dispositivo, porque no hubo
+    // ningún chequeo del servidor que evite reintentos; una entrega validada en línea
+    // no bloquea el dispositivo, porque el servidor ya impide reusar ese código
+    // (y así varios alumnos pueden seguir compartiendo el mismo dispositivo).
     if(!state.modoDocente){
-      try{ localStorage.setItem(COMPLETED_KEY, "1"); }catch(e){}
+      try{ localStorage.setItem(COMPLETED_KEY, JSON.stringify({validado: state.validado, ts: Date.now()})); }catch(e){}
     }
 
     var payload = buildPayload(cerradoPorSalir);
@@ -784,21 +789,33 @@
     }
   };
 
-  // NOTA (14/9/2026): el bloqueo por reintento ahora es por código de alumno,
+  // NOTA (14/9/2026): el bloqueo por reintento es por código de alumno,
   // verificado contra la planilla "Codigos" en el servidor (ver validarCodigo),
   // no por dispositivo/navegador — un mismo dispositivo puede ser usado por
-  // más de un alumno con códigos distintos. Se deja esta función sin invocar
-  // por si hiciera falta reactivar el bloqueo por dispositivo más adelante.
+  // más de un alumno con códigos distintos.
+  // ACTUALIZADO (19/9/2026): esa protección del servidor NO existe cuando se usa
+  // el respaldo manual "Continuar sin validar" (no hay ningún chequeo contra la
+  // planilla), así que ahí sí hace falta un bloqueo local: si la última entrega
+  // de este dispositivo NO fue validada en línea, se bloquea el reingreso acá.
+  // Si SÍ fue validada en línea, no se bloquea (para no impedir que otro alumno
+  // use el mismo dispositivo con su propio código).
   function checkAlreadyCompleted(){
     var done;
     try{ done = localStorage.getItem(COMPLETED_KEY); }catch(e){ done = null; }
-    if(done){
-      document.getElementById("login-screen").style.display = "none";
-      document.getElementById("already-done-screen").style.display = "block";
-      return true;
+    if(!done) return false;
+    var info;
+    try{ info = JSON.parse(done); }catch(e){ info = null; }
+    if(info && info.validado === true){
+      return false;
     }
-    return false;
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("already-done-screen").style.display = "block";
+    return true;
   }
+
+  // Bloquear reingreso si la última entrega de este dispositivo se hizo sin
+  // validar el código en línea (ver checkAlreadyCompleted)
+  checkAlreadyCompleted();
 
   // Reintentar envíos pendientes de sesiones anteriores en este mismo navegador
   retryPendingSubmission();
