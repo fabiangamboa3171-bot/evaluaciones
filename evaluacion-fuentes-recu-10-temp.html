@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recuperatorio: Fuentes Lineales y Fuentes Conmutadas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#fbf3e7;
+    --cream-2:#f3e6d2;
+    --copper:#b5651d;
+    --copper-dark:#8a4a12;
+    --amber:#d98324;
+    --ink:#3a2a1a;
+    --ink-soft:#6b5643;
+    --ok:#2f7d4f;
+    --bad:#b6412c;
+    --card:#fffaf2;
+    --border:#e4cfa9;
+    --shadow: 0 10px 30px rgba(90,55,15,0.12);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #fff6e8 0%, transparent 60%),
+      radial-gradient(1000px 700px at 110% 10%, #f7e4c3 0%, transparent 55%),
+      var(--cream);
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 16px 80px;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; margin:0 0 8px; color:var(--copper-dark);}
+  .card{
+    width:100%;
+    max-width:720px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    padding:32px 28px;
+  }
+  .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-size:12px;
+    font-weight:600;
+    color:var(--amber);
+    margin-bottom:6px;
+  }
+  p.lead{color:var(--ink-soft); line-height:1.5;}
+  label{display:block; font-weight:600; font-size:14px; margin:16px 0 6px; color:var(--ink);}
+  input[type=text]{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1.5px solid var(--border);
+    background:#fff;
+    font-size:15px;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  input[type=text]:focus{outline:2px solid var(--amber); border-color:var(--amber);}
+  .warn-box{
+    margin-top:20px;
+    padding:14px 16px;
+    background:#fdece3;
+    border:1px solid #f0c39f;
+    border-radius:12px;
+    font-size:13.5px;
+    color:#7a3a1a;
+    line-height:1.5;
+  }
+  .btn{
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+    font-weight:700;
+    font-size:15px;
+    padding:13px 22px;
+    border-radius:12px;
+    background:linear-gradient(180deg, var(--amber), var(--copper));
+    color:#fff8ee;
+    box-shadow:0 6px 16px rgba(180,90,20,.35);
+  }
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .btn.secondary{
+    background:#fff;
+    color:var(--copper-dark);
+    border:1.5px solid var(--border);
+    box-shadow:none;
+  }
+  .btn-row{display:flex; gap:10px; margin-top:22px; justify-content:flex-end;}
+  #app{width:100%; max-width:760px; display:flex; flex-direction:column; align-items:center; gap:18px;}
+
+  /* progress bar de "bandas de resistor" */
+  .progress-wrap{width:100%; max-width:720px;}
+  .progress-track{
+    display:flex;
+    gap:3px;
+    height:14px;
+    border-radius:8px;
+    overflow:hidden;
+    background:#eee1c9;
+    border:1px solid var(--border);
+  }
+  .progress-band{flex:1; background:#eee1c9; transition:background .25s ease;}
+  .progress-label{font-size:12.5px; color:var(--ink-soft); margin-top:6px; text-align:right;}
+
+  .q-meta{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;}
+  .q-index{font-size:13px; font-weight:700; color:var(--amber); text-transform:uppercase; letter-spacing:.08em;}
+  .q-points{font-size:13px; color:var(--ink-soft);}
+  .q-text{font-size:19px; font-weight:600; line-height:1.4; margin:10px 0 20px; color:var(--ink);}
+  .option{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:14px 16px;
+    border:1.5px solid var(--border);
+    border-radius:12px;
+    margin-bottom:10px;
+    cursor:pointer;
+    background:#fff;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .option:hover{border-color:var(--amber);}
+  .option.selected{border-color:var(--copper); background:#fdf1de;}
+  .option input{accent-color:var(--copper); margin-top:3px;}
+  .option-text{font-size:15px; line-height:1.4;}
+
+  #lock-overlay{
+    position:fixed; inset:0; background:rgba(58,42,26,.92);
+    display:none; align-items:center; justify-content:center; z-index:999; padding:20px;
+  }
+  #lock-overlay .card{max-width:480px; text-align:center; border-color:var(--bad);}
+  #lock-overlay h2{color:var(--bad);}
+
+  .score-hero{
+    text-align:center;
+    padding:18px 0 6px;
+  }
+  .score-num{font-family:'Fraunces', serif; font-size:64px; font-weight:700; color:var(--copper-dark); line-height:1;}
+  .score-sub{color:var(--ink-soft); margin-top:4px;}
+  .status-pill{
+    display:inline-block; margin-top:10px; padding:6px 14px; border-radius:999px;
+    font-size:12.5px; font-weight:700; letter-spacing:.03em;
+  }
+  .status-ok{background:#e2f3e8; color:var(--ok);}
+  .status-bad{background:#fbe4de; color:var(--bad);}
+
+  table.review{width:100%; border-collapse:collapse; margin-top:20px; font-size:13.5px;}
+  table.review th, table.review td{text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); vertical-align:top;}
+  table.review th{color:var(--ink-soft); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em;}
+  .ans-ok{color:var(--ok); font-weight:600;}
+  .ans-bad{color:var(--bad); font-weight:600;}
+
+  textarea#backup-text{
+    width:100%; min-height:110px; margin-top:14px; padding:10px 12px;
+    border-radius:10px; border:1.5px solid var(--border); font-family:'IBM Plex Sans',monospace; font-size:12.5px;
+    color:var(--ink-soft); resize:vertical;
+  }
+
+  footer{
+    margin-top:28px; text-align:center; font-size:12px; color:#b79f7d;
+  }
+  footer a{color:#b79f7d; text-decoration:underline; cursor:pointer;}
+  #teacher-tag{
+    display:none; margin-top:14px; padding:8px 12px; border-radius:10px;
+    background:#fdf1de; border:1px dashed var(--copper); color:var(--copper-dark);
+    font-size:12.5px; font-weight:600; text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- PANTALLA DE BLOQUEO POR REINTENTO (alumno que ya rindió en este dispositivo) -->
+  <div class="card" id="already-done-screen" style="display:none;">
+    <div class="eyebrow">Evaluación · Electrónica Industrial</div>
+    <h1>Ya registramos tu entrega</h1>
+    <p class="lead">Este dispositivo/navegador ya registró una entrega de esta evaluación (normal o por salir de
+    pantalla). No se puede volver a rendir desde aquí. Si creés que esto es un error, avisale a tu docente
+    directamente — no recargues ni intentes de nuevo por tu cuenta.</p>
+  </div>
+
+  <!-- PANTALLA DE LOGIN -->
+  <div class="card" id="login-screen">
+    <div class="eyebrow">Evaluación · Electrónica Industrial</div>
+    <h1>Recuperatorio: Fuentes Lineales y Fuentes Conmutadas</h1>
+    <p class="lead">10 preguntas de opción múltiple · 10 puntos cada una · 100 puntos = nota 10.</p>
+
+    <div id="codigo-step">
+      <label for="in-codigo">Código de alumno</label>
+      <input type="text" id="in-codigo" autocomplete="off" placeholder="Ingresá tu código" inputmode="numeric">
+      <div class="btn-row">
+        <button class="btn" id="btn-validar" onclick="validarCodigo()">Validar código</button>
+      </div>
+      <div id="codigo-msg" style="display:none; margin-top:12px; font-size:13.5px; font-weight:600;"></div>
+    </div>
+
+    <div id="manual-step" style="display:none;">
+      <div class="warn-box" style="background:#fdece3; border-color:#f0c39f; color:#7a3a1a;">
+        Si tu conexión sigue sin validar el código, podés completar tus datos y continuar igual —
+        tu docente va a confirmar el código más tarde con la planilla.
+      </div>
+      <label for="in-apellido-manual">Apellido</label>
+      <input type="text" id="in-apellido-manual" autocomplete="off" placeholder="Tu apellido">
+      <label for="in-nombre-manual">Nombre</label>
+      <input type="text" id="in-nombre-manual" autocomplete="off" placeholder="Tu nombre">
+      <label for="in-curso-manual">Curso</label>
+      <input type="text" id="in-curso-manual" autocomplete="off" placeholder="Ej: 5to 10ma">
+      <div class="btn-row">
+        <button class="btn" id="btn-continuar-manual" onclick="continuarSinValidar()">Continuar sin validar</button>
+      </div>
+    </div>
+
+    <div id="confirm-step" style="display:none;">
+      <div class="warn-box" id="confirm-box" style="background:#e2f3e8; border-color:#bfe3cc; color:#215c37;"></div>
+      <div class="warn-box">
+        <strong>Importante:</strong> una vez que empieces, no podés salir ni minimizar esta pestaña.
+        Si cambiás de pestaña, minimizás la ventana o cerrás el navegador, la evaluación se cierra
+        automáticamente y se entrega con las respuestas marcadas hasta ese momento.
+      </div>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="cambiarCodigo()">No soy yo</button>
+        <button class="btn" id="btn-start" onclick="startQuiz()">Comenzar evaluación</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA DEL EXAMEN -->
+  <div id="quiz-screen" style="display:none; width:100%; max-width:720px;">
+    <div class="progress-wrap">
+      <div class="progress-track" id="progress-track"></div>
+      <div class="progress-label" id="progress-label">Pregunta 1 de 20</div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <div class="q-meta">
+        <span class="q-index" id="q-index">Pregunta 1</span>
+        <span class="q-points">5 puntos</span>
+      </div>
+      <div class="q-text" id="q-text"></div>
+      <div id="q-options"></div>
+      <div class="btn-row">
+        <button class="btn" id="btn-next" onclick="nextQuestion()" disabled>Siguiente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA DE RESULTADO -->
+  <div id="result-screen" style="display:none; width:100%; max-width:720px;">
+    <div class="card">
+      <div class="score-hero">
+        <div class="eyebrow">Resultado</div>
+        <div class="score-num" id="score-nota">-</div>
+        <div class="score-sub" id="score-detalle">- / 100 puntos</div>
+        <div id="status-pill-wrap"></div>
+      </div>
+      <table class="review" id="review-table">
+        <thead>
+          <tr><th>#</th><th>Pregunta</th><th>Tu respuesta</th><th>Correcta</th></tr>
+        </thead>
+        <tbody id="review-body"></tbody>
+      </table>
+      <label for="backup-text" style="margin-top:18px;">Texto de respaldo (podés copiarlo como comprobante)</label>
+      <textarea id="backup-text" readonly></textarea>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="copyBackupText()">Copiar comprobante</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Sistema de evaluación interactiva · Electrónica Industrial
+    <div><a onclick="openTeacherPanel()">Acceso docente</a></div>
+    <div id="teacher-tag">Modo docente activo: sin bloqueo por salida ni envío a la planilla.</div>
+  </footer>
+
+</div>
+
+<!-- OVERLAY DE BLOQUEO POR SALIDA -->
+<div id="lock-overlay">
+  <div class="card">
+    <h2>Evaluación cerrada</h2>
+    <p class="lead">Detectamos que saliste de esta pantalla o cambiaste de pestaña. La evaluación se cerró
+    automáticamente y se envió con las respuestas marcadas hasta ese momento.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ======= CONFIGURACIÓN =======
+  var WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyYQwVQh5Z1zPKgCT9qrHy4T1xmPXZUxsUPPq0BjGnRCCKWPvJeuwhS0v4nRe_PKqxa/exec";
+  var TEMA = "Fuentes Lineales y Fuentes Conmutadas - Recuperatorio";
+  var STORAGE_KEY = "pendiente_fuentes_recuperatorio_v1";
+  var COMPLETED_KEY = "completado_fuentes_recuperatorio_v1";
+  var TEACHER_PASSWORD = "recufuentes2026";
+  var HOJA_DESTINO = "FuentesRecu";
+
+  // Bandas estilo código de colores de resistencias (0-9), se repiten cada 10 preguntas
+  var RESISTOR_COLORS = ["#000000","#8a4a12","#d9362e","#f2871f","#f2c12e","#3f9142","#2f6fd9","#7c3aed","#8a8a8a","#f5efe3"];
+
+  var questions = [
+    {q:"¿Cuál es la función del transformador en una fuente lineal?",
+     options:["Rectificar la corriente alterna","Suavizar el rizado de la tensión rectificada","Elevar o reducir el nivel de tensión de entrada, aislando galvánicamente el circuito","Estabilizar la tensión de salida ante variaciones de carga"], correct:2},
+    {q:"En un rectificador de onda completa tipo puente, ¿cuántos diodos conducen simultáneamente en cada semiciclo?",
+     options:["1","2","3","4"], correct:1},
+    {q:"¿Qué componente se encarga de reducir el rizado (ripple) a la salida del rectificador?",
+     options:["El transformador","El capacitor de filtro","El diodo Zener","El transistor de paso"], correct:1},
+    {q:"Un regulador de tensión lineal mantiene la tensión de salida constante disipando el excedente de energía principalmente en forma de:",
+     options:["Campo magnético","Radiación electromagnética","Energía química","Calor"], correct:3},
+    {q:"¿Cuál es la principal desventaja de una fuente lineal frente a una conmutada, para una misma potencia de salida?",
+     options:["Genera mucha interferencia electromagnética","No puede regular la tensión de salida","Es más grande, pesada y menos eficiente","Requiere frecuencias de conmutación muy altas"], correct:2},
+    {q:"En una fuente conmutada, el elemento que actúa como interruptor de alta velocidad (encendido/apagado) suele ser:",
+     options:["Un diodo Zener","Un capacitor electrolítico","Un transformador toroidal","Un transistor MOSFET o similar"], correct:3},
+    {q:"El ciclo de trabajo (duty cycle) de la señal PWM que gobierna al interruptor de una fuente conmutada determina principalmente:",
+     options:["La frecuencia de la red eléctrica","El nivel de tensión de salida","El tipo de rectificador utilizado","El color del diodo indicador"], correct:1},
+    {q:"¿Qué función cumple el lazo de realimentación (feedback) en una fuente conmutada?",
+     options:["Aumentar la frecuencia de conmutación","Rectificar la corriente alterna de entrada","Comparar la tensión de salida con una referencia y ajustar el ciclo de trabajo para mantenerla estable","Eliminar el transformador del circuito"], correct:2},
+    {q:"Una desventaja característica de las fuentes conmutadas frente a las lineales es:",
+     options:["Menor eficiencia energética","Mayor tamaño y peso","Imposibilidad de regular la tensión de salida","Generación de interferencia electromagnética (EMI) que requiere filtrado adicional"], correct:3},
+    {q:"Un ejemplo típico de fuente conmutada de uso cotidiano es:",
+     options:["Una pila común","El cargador de un teléfono celular o la fuente de una PC","Un transformador de timbre sin rectificar","Una batería de auto"], correct:1}
+  ];
+
+  var PUNTOS_POR_PREGUNTA = 10;
+
+  var state = {
+    apellido:"", nombre:"", curso:"", codigo:"", especial:false,
+    current:0,
+    answers:new Array(questions.length).fill(null),
+    started:false,
+    finished:false,
+    modoDocente:false
+  };
+
+  var alumnoValidado = null;
+
+  // ======= VALIDACIÓN DE CÓDIGO (contra la planilla "Codigos", vía JSONP) =======
+  window.validarCodigo = function(){
+    var codigo = document.getElementById("in-codigo").value.trim();
+    if(!codigo){ alert("Ingresá tu código antes de validar."); return; }
+
+    var msg = document.getElementById("codigo-msg");
+    var btn = document.getElementById("btn-validar");
+    msg.style.display = "block";
+    msg.style.color = "var(--ink-soft)";
+    msg.textContent = "Validando código...";
+    btn.disabled = true;
+
+    var MAX_INTENTOS = 3;
+    var TIMEOUT_MS = 20000;
+
+    function intentar(numIntento){
+      msg.style.color = "var(--ink-soft)";
+      msg.textContent = numIntento > 1
+        ? "Validando código... (intento " + numIntento + " de " + MAX_INTENTOS + ")"
+        : "Validando código...";
+
+      var cbName = "cbValidarCodigo_" + Date.now() + "_" + numIntento;
+      var terminado = false;
+
+      function limpiar(){
+        var s = document.getElementById("jsonp-validar-codigo");
+        if(s && s.parentNode) s.parentNode.removeChild(s);
+        try{ window[cbName] = function(){}; }catch(e){}
+      }
+
+      function reintentarOFallar(){
+        limpiar();
+        if(numIntento < MAX_INTENTOS){
+          setTimeout(function(){ intentar(numIntento + 1); }, 900 * numIntento);
+          return;
+        }
+        btn.disabled = false;
+        msg.style.color = "var(--bad)";
+        msg.textContent = "No se pudo conectar para validar el código después de " + MAX_INTENTOS + " intentos. Revisá tu conexión a internet (o probá con datos móviles / otro WiFi), o completá tus datos abajo para continuar sin validar.";
+        document.getElementById("manual-step").style.display = "block";
+      }
+
+      var timeoutId = setTimeout(function(){
+        if(terminado) return;
+        terminado = true;
+        reintentarOFallar();
+      }, TIMEOUT_MS);
+
+      window[cbName] = function(resp){
+        if(terminado) return;
+        terminado = true;
+        clearTimeout(timeoutId);
+        limpiar();
+        btn.disabled = false;
+        if(!resp || !resp.valido){
+          msg.style.color = "var(--bad)";
+          msg.textContent = "Código no encontrado. Revisalo bien antes de volver a intentar, o avisale a tu docente.";
+          return;
+        }
+        if(resp.usado && !resp.especial){
+          msg.style.color = "var(--bad)";
+          msg.textContent = "Este código ya fue usado para entregar esta evaluación. Si creés que es un error, avisale a tu docente.";
+          return;
+        }
+        msg.style.display = "none";
+        alumnoValidado = resp;
+        alumnoValidado.codigo = codigo;
+        document.getElementById("codigo-step").style.display = "none";
+        document.getElementById("confirm-step").style.display = "block";
+        document.getElementById("confirm-box").textContent =
+          "Alumno/a: " + resp.apellido + ", " + resp.nombre + " — Curso: " + resp.curso + ". Si no sos vos, tocá \"No soy yo\".";
+      };
+
+      var script = document.createElement("script");
+      script.id = "jsonp-validar-codigo";
+      script.src = WEBHOOK_URL + "?accion=validar_codigo&codigo=" + encodeURIComponent(codigo) + "&callback=" + cbName;
+      script.onerror = function(){
+        if(terminado) return;
+        terminado = true;
+        clearTimeout(timeoutId);
+        reintentarOFallar();
+      };
+      document.body.appendChild(script);
+    }
+
+    intentar(1);
+  };
+
+  window.cambiarCodigo = function(){
+    alumnoValidado = null;
+    document.getElementById("in-codigo").value = "";
+    document.getElementById("codigo-msg").style.display = "none";
+    document.getElementById("confirm-step").style.display = "none";
+    document.getElementById("codigo-step").style.display = "block";
+    document.getElementById("manual-step").style.display = "none";
+    document.getElementById("in-apellido-manual").value = "";
+    document.getElementById("in-nombre-manual").value = "";
+    document.getElementById("in-curso-manual").value = "";
+    var cbReset = document.getElementById("confirm-box");
+    cbReset.style.background = "#e2f3e8"; cbReset.style.borderColor = "#bfe3cc"; cbReset.style.color = "#215c37";
+  };
+
+  // ======= CONTINUAR SIN VALIDAR (respaldo si falla la conexión) =======
+  window.continuarSinValidar = function(){
+    var codigo = document.getElementById("in-codigo").value.trim();
+    var apellido = document.getElementById("in-apellido-manual").value.trim();
+    var nombre = document.getElementById("in-nombre-manual").value.trim();
+    var curso = document.getElementById("in-curso-manual").value.trim();
+    if(!apellido || !nombre || !curso){
+      alert("Completá apellido, nombre y curso para continuar.");
+      return;
+    }
+    alumnoValidado = {
+      apellido: apellido,
+      nombre: nombre,
+      curso: curso,
+      especial: false,
+      usado: false,
+      validado: false
+    };
+    alumnoValidado.codigo = codigo || "(sin código)";
+    document.getElementById("codigo-msg").style.display = "none";
+    document.getElementById("manual-step").style.display = "none";
+    document.getElementById("codigo-step").style.display = "none";
+    document.getElementById("confirm-step").style.display = "block";
+    var cb = document.getElementById("confirm-box");
+    cb.style.background = "#fdf1de"; cb.style.borderColor = "#e4cfa9"; cb.style.color = "#7a3a1a";
+    cb.textContent =
+      "Alumno/a: " + apellido + ", " + nombre + " — Curso: " + curso + " (código no verificado por conexión). Si no sos vos, tocá \"No soy yo\".";
+  };
+
+  // ======= LOGIN / INICIO =======
+  window.startQuiz = function(){
+    if(!alumnoValidado){ return; }
+    state.apellido = alumnoValidado.apellido;
+    state.nombre = alumnoValidado.nombre;
+    state.curso = alumnoValidado.curso;
+    state.codigo = alumnoValidado.codigo;
+    state.especial = !!alumnoValidado.especial;
+    state.validado = (alumnoValidado.validado !== false);
+    state.started = true;
+
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("quiz-screen").style.display = "block";
+
+    buildProgressTrack();
+    renderQuestion();
+  };
+
+  function buildProgressTrack(){
+    var track = document.getElementById("progress-track");
+    track.innerHTML = "";
+    for(var i=0;i<questions.length;i++){
+      var band = document.createElement("div");
+      band.className = "progress-band";
+      band.id = "band-"+i;
+      track.appendChild(band);
+    }
+  }
+
+  function updateProgress(){
+    for(var i=0;i<questions.length;i++){
+      var band = document.getElementById("band-"+i);
+      if(!band) continue;
+      band.style.background = (i <= state.current) ? RESISTOR_COLORS[i % 10] : "#eee1c9";
+    }
+    document.getElementById("progress-label").textContent =
+      "Pregunta " + (state.current+1) + " de " + questions.length;
+  }
+
+  // ======= RENDER DE PREGUNTAS =======
+  function renderQuestion(){
+    var idx = state.current;
+    var qData = questions[idx];
+    document.getElementById("q-index").textContent = "Pregunta " + (idx+1);
+    document.getElementById("q-text").textContent = qData.q;
+    updateProgress();
+
+    var wrap = document.getElementById("q-options");
+    wrap.innerHTML = "";
+    qData.options.forEach(function(optText, i){
+      var opt = document.createElement("label");
+      opt.className = "option" + (state.answers[idx]===i ? " selected" : "");
+      opt.innerHTML =
+        '<input type="radio" name="opt" ' + (state.answers[idx]===i ? "checked" : "") + '>' +
+        '<span class="option-text"></span>';
+      opt.querySelector(".option-text").textContent = optText;
+      opt.addEventListener("click", function(){ selectAnswer(i); });
+      wrap.appendChild(opt);
+    });
+
+    var btnNext = document.getElementById("btn-next");
+    btnNext.disabled = (state.answers[idx] === null);
+    btnNext.textContent = (idx === questions.length-1) ? "Finalizar evaluación" : "Siguiente";
+  }
+
+  window.selectAnswer = function(i){
+    state.answers[state.current] = i;
+    renderQuestion();
+  };
+
+  window.nextQuestion = function(){
+    if(state.answers[state.current] === null) return;
+    if(state.current < questions.length - 1){
+      state.current++;
+      renderQuestion();
+    } else {
+      finishQuiz(false);
+    }
+  };
+
+  // ======= PUNTAJE =======
+  function computeScore(){
+    var correctas = 0;
+    for(var i=0;i<questions.length;i++){
+      if(state.answers[i] === questions[i].correct) correctas++;
+    }
+    var puntaje = correctas * PUNTOS_POR_PREGUNTA;
+    var nota = Math.round((puntaje/10) * 10) / 10; // nota /10 con un decimal
+    return {correctas:correctas, puntaje:puntaje, nota:nota};
+  }
+
+  // ======= ANTI-SALIDA =======
+  function lockQuiz(){
+    document.getElementById("lock-overlay").style.display = "flex";
+    document.getElementById("quiz-screen").style.display = "none";
+  }
+
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden && state.started && !state.finished && !state.modoDocente){
+      lockQuiz();
+      finishQuiz(true);
+    }
+  });
+
+  window.addEventListener("pagehide", function(){
+    if(state.started && !state.finished && !state.modoDocente){
+      lockQuiz();
+      finishQuiz(true);
+    }
+  });
+
+  // ======= ENVÍO DE RESULTADOS =======
+  function buildPayload(cerradoPorSalir){
+    var score = computeScore();
+    return {
+      apellido: state.apellido,
+      nombre: state.nombre,
+      curso: state.curso,
+      codigo: state.codigo,
+      validado: state.validado,
+      tema: TEMA,
+      hoja: HOJA_DESTINO,
+      nota: score.nota,
+      puntaje: score.puntaje,
+      cerradoPorSalir: !!cerradoPorSalir
+    };
+  }
+
+  // IMPORTANTE: el valor que devuelve navigator.sendBeacon() sólo confirma que
+  // el navegador ACEPTÓ encolar el envío, no que el servidor lo haya recibido.
+  // Por eso el respaldo en localStorage NUNCA se borra automáticamente acá:
+  // se reintenta cada vez que se vuelve a abrir esta página en el mismo
+  // dispositivo/navegador, hasta que el docente confirme que la fila llegó
+  // a la planilla. Enviar de más nunca es un problema (se usa la primera fila).
+  function sendResult(payload){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); }catch(e){}
+    attemptSend(payload);
+  }
+
+  function attemptSend(payload){
+    var json = JSON.stringify(payload);
+    // Intento 1: sendBeacon — sobrevive aunque la pestaña se cierre justo después.
+    try{
+      if(navigator.sendBeacon){
+        var blob = new Blob([json], {type:"application/json"});
+        navigator.sendBeacon(WEBHOOK_URL, blob);
+      }
+    }catch(e){ /* seguimos con el intento 2 igual */ }
+    // Intento 2 (redundante, no depende del primero): fetch en modo no-cors,
+    // evita el preflight de CORS que bloquea un fetch normal contra Apps Script.
+    try{
+      fetch(WEBHOOK_URL, {
+        method:"POST",
+        mode:"no-cors",
+        headers:{"Content-Type":"text/plain;charset=UTF-8"},
+        body: json,
+        keepalive:true
+      }).catch(function(){ /* queda en localStorage para reintentar */ });
+    }catch(e){ /* queda en localStorage para reintentar */ }
+  }
+
+  function retryPendingSubmission(){
+    var pending;
+    try{ pending = localStorage.getItem(STORAGE_KEY); }catch(e){ pending = null; }
+    if(!pending) return;
+    try{
+      var payload = JSON.parse(pending);
+      attemptSend(payload);
+    }catch(e){}
+  }
+
+  // ======= FINALIZAR Y MOSTRAR RESULTADO =======
+  function finishQuiz(cerradoPorSalir){
+    if(state.finished) return;
+    state.finished = true;
+
+    // Bloqueo persistente: se marca ANTES de intentar el envío, para que recargar
+    // o reabrir esta página en el mismo dispositivo no permita un segundo intento
+    // (normal o por haber salido de pantalla) sin que el docente lo autorice.
+    // Se guarda si esta entrega fue validada en línea o no (ver checkAlreadyCompleted):
+    // una entrega SIN validar (respaldo manual) bloquea el dispositivo, porque no hubo
+    // ningún chequeo del servidor que evite reintentos; una entrega validada en línea
+    // no bloquea el dispositivo, porque el servidor ya impide reusar ese código
+    // (y así varios alumnos pueden seguir compartiendo el mismo dispositivo).
+    if(!state.modoDocente){
+      try{ localStorage.setItem(COMPLETED_KEY, JSON.stringify({validado: state.validado, ts: Date.now()})); }catch(e){}
+    }
+
+    var payload = buildPayload(cerradoPorSalir);
+    if(!state.modoDocente){
+      sendResult(payload);
+    }
+    showResult(payload, cerradoPorSalir);
+  }
+
+  function showResult(payload, cerradoPorSalir){
+    document.getElementById("quiz-screen").style.display = "none";
+    document.getElementById("lock-overlay").style.display = "none";
+    document.getElementById("result-screen").style.display = "block";
+
+    document.getElementById("score-nota").textContent = payload.nota;
+    document.getElementById("score-detalle").textContent = payload.puntaje + " / 100 puntos";
+
+    var pillWrap = document.getElementById("status-pill-wrap");
+    pillWrap.innerHTML = "";
+    var pill = document.createElement("span");
+    if(cerradoPorSalir){
+      pill.className = "status-pill status-bad";
+      pill.textContent = "Cerrado por salir de la pantalla";
+    } else {
+      pill.className = "status-pill status-ok";
+      pill.textContent = "Entregado normalmente";
+    }
+    pillWrap.appendChild(pill);
+
+    var body = document.getElementById("review-body");
+    body.innerHTML = "";
+    questions.forEach(function(qData, i){
+      var tr = document.createElement("tr");
+      var tuResp = state.answers[i]===null ? "(sin responder)" : qData.options[state.answers[i]];
+      var correcta = qData.options[qData.correct];
+      var esCorrecta = state.answers[i] === qData.correct;
+      tr.innerHTML =
+        "<td>" + (i+1) + "</td>" +
+        "<td>" + escapeHtml(qData.q) + "</td>" +
+        '<td class="' + (esCorrecta ? "ans-ok" : "ans-bad") + '">' + escapeHtml(tuResp) + "</td>" +
+        "<td>" + escapeHtml(correcta) + "</td>";
+      body.appendChild(tr);
+    });
+
+    var fecha = new Date().toLocaleString("es-AR");
+    var texto =
+      "EVALUACIÓN: " + TEMA + "\n" +
+      "Alumno/a: " + payload.apellido + ", " + payload.nombre + "\n" +
+      "Curso: " + payload.curso + "\n" +
+      "Código verificado: " + (payload.validado === false ? "No (confirmar con el/la docente)" : "Sí") + "\n" +
+      "Nota: " + payload.nota + " / 10  (" + payload.puntaje + " / 100 puntos)\n" +
+      "Estado: " + (cerradoPorSalir ? "Cerrado por salir de la pantalla" : "Entregado normalmente") + "\n" +
+      "Fecha: " + fecha;
+    document.getElementById("backup-text").value = texto;
+  }
+
+  window.copyBackupText = function(){
+    var ta = document.getElementById("backup-text");
+    ta.select();
+    ta.setSelectionRange(0, 999999);
+    try{
+      document.execCommand("copy");
+      alert("Comprobante copiado.");
+    }catch(e){
+      alert("No se pudo copiar automáticamente. Copiá el texto manualmente.");
+    }
+  };
+
+  function escapeHtml(str){
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ======= PANEL DOCENTE (modo prueba, sin envío ni bloqueo) =======
+  window.openTeacherPanel = function(){
+    var clave = prompt("Clave de acceso docente:");
+    if(clave === null) return;
+    if(clave === TEACHER_PASSWORD){
+      state.modoDocente = true;
+      document.getElementById("teacher-tag").style.display = "block";
+      // El modo docente también resetea el bloqueo local, para poder probar
+      // la evaluación las veces que haga falta desde este mismo dispositivo.
+      try{ localStorage.removeItem(COMPLETED_KEY); }catch(e){}
+      try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+      state.finished = false;
+      state.started = false;
+      state.current = 0;
+      state.answers = new Array(questions.length).fill(null);
+      alumnoValidado = null;
+      document.getElementById("codigo-step").style.display = "block";
+      document.getElementById("confirm-step").style.display = "none";
+      document.getElementById("in-codigo").value = "";
+      document.getElementById("codigo-msg").style.display = "none";
+      document.getElementById("manual-step").style.display = "none";
+      document.getElementById("already-done-screen").style.display = "none";
+      document.getElementById("result-screen").style.display = "none";
+      document.getElementById("quiz-screen").style.display = "none";
+      document.getElementById("login-screen").style.display = "block";
+      alert("Modo docente activado: se reinició el bloqueo local para que puedas probar la evaluación. No se bloqueará por salir de pantalla ni se enviarán resultados a la planilla mientras esté activo.");
+    } else {
+      alert("Clave incorrecta.");
+    }
+  };
+
+  // NOTA (14/9/2026): el bloqueo por reintento es por código de alumno,
+  // verificado contra la planilla "Codigos" en el servidor (ver validarCodigo),
+  // no por dispositivo/navegador — un mismo dispositivo puede ser usado por
+  // más de un alumno con códigos distintos.
+  // ACTUALIZADO (19/9/2026): esa protección del servidor NO existe cuando se usa
+  // el respaldo manual "Continuar sin validar" (no hay ningún chequeo contra la
+  // planilla), así que ahí sí hace falta un bloqueo local: si la última entrega
+  // de este dispositivo NO fue validada en línea, se bloquea el reingreso acá.
+  // Si SÍ fue validada en línea, no se bloquea (para no impedir que otro alumno
+  // use el mismo dispositivo con su propio código).
+  function checkAlreadyCompleted(){
+    var done;
+    try{ done = localStorage.getItem(COMPLETED_KEY); }catch(e){ done = null; }
+    if(!done) return false;
+    var info;
+    try{ info = JSON.parse(done); }catch(e){ info = null; }
+    if(info && info.validado === true){
+      return false;
+    }
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("already-done-screen").style.display = "block";
+    return true;
+  }
+
+  // VERSION TEMPORAL DE EMERGENCIA (22/9/2026): NO se invoca el bloqueo por
+  // dispositivo (checkAlreadyCompleted) porque estaba bloqueando dispositivos
+  // legitimos por error (marca vieja de pruebas) y el usuario necesitaba
+  // evaluar con urgencia. El unico control de reingreso que queda activo es
+  // el del servidor (codigo de alumno ya usado, ver validarCodigo_ y
+  // marcarCodigoUsado_ en el Apps Script) para las entregas validadas en
+  // linea. Las entregas por el respaldo manual "Continuar sin validar" NO
+  // quedan protegidas contra reingreso en esta version -- es una decision
+  // consciente del docente para poder tomar el examen ahora. Restaurar el
+  // bloqueo por dispositivo (la linea checkAlreadyCompleted(); que sigue
+  // definida mas abajo) cuando se repare la version original.
+
+  // Reintentar envíos pendientes de sesiones anteriores en este mismo navegador
+  retryPendingSubmission();
+
+})();
+</script>
+</body>
+</html>
