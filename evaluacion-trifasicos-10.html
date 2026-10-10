@@ -477,7 +477,7 @@
 
       var script = document.createElement("script");
       script.id = "jsonp-validar-codigo";
-      script.src = WEBHOOK_URL + "?accion=validar_codigo&codigo=" + encodeURIComponent(codigo) + "&callback=" + cbName;
+      script.src = WEBHOOK_URL + "?accion=validar_codigo&codigo=" + encodeURIComponent(codigo) + "&tema=" + encodeURIComponent(TEMA) + "&callback=" + cbName;
       script.onerror = function(){
         if(terminado) return;
         terminado = true;
