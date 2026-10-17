@@ -320,11 +320,11 @@
   // Los puntos de cada pregunta se reparten en partes iguales entre sus espacios.
   function norm(s){
     return String(s == null ? "" : s).toLowerCase()
-      .normalize("NFD").replace(/[̀-ͯ]/g, "")
-      .replace(/[.,;:!?¡¿"'()]/g, " ").replace(/s+/g, " ").trim();
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[.,;:!?¡¿"'()]/g, " ").replace(/\s+/g, " ").trim();
   }
   function parseNum(s){
-    var m = String(s == null ? "" : s).replace(",", ".").match(/-?d+(.d+)?/);
+    var m = String(s == null ? "" : s).replace(",", ".").match(/-?\d+(\.\d+)?/);
     return m ? parseFloat(m[0]) : null;
   }
   function checkNumero(valor, palabra){
@@ -451,7 +451,7 @@
         document.getElementById("codigo-step").style.display = "none";
         document.getElementById("confirm-step").style.display = "block";
         document.getElementById("confirm-box").textContent =
-          "Alumno/a: " + resp.apellido + ", " + resp.nombre + " — Curso: " + resp.curso + ". Si no sos vos, tocá "No soy yo".";
+          "Alumno/a: " + resp.apellido + ", " + resp.nombre + " — Curso: " + resp.curso + ". Si no sos vos, tocá \"No soy yo\".";
       };
 
       var script = document.createElement("script");
@@ -509,7 +509,7 @@
     var cb = document.getElementById("confirm-box");
     cb.style.background = "#fdf1de"; cb.style.borderColor = "#e4cfa9"; cb.style.color = "#7a3a1a";
     cb.textContent =
-      "Alumno/a: " + apellido + ", " + nombre + " — Curso: " + curso + " (código no verificado por conexión). Si no sos vos, tocá "No soy yo".";
+      "Alumno/a: " + apellido + ", " + nombre + " — Curso: " + curso + " (código no verificado por conexión). Si no sos vos, tocá \"No soy yo\".";
   };
 
   // ======= LOGIN / INICIO =======
@@ -803,18 +803,12 @@
 
     var fecha = new Date().toLocaleString("es-AR");
     var texto =
-      "EVALUACIÓN: " + TEMA + "
-" +
-      "Alumno/a: " + payload.apellido + ", " + payload.nombre + "
-" +
-      "Curso: " + payload.curso + "
-" +
-      "Código verificado: " + (payload.validado === false ? "No (confirmar con el/la docente)" : "Sí") + "
-" +
-      "Nota: " + payload.nota + " / 10  (" + payload.puntaje + " / 10 puntos)
-" +
-      "Estado: " + (cerradoPorSalir ? "Cerrado por salir de la pantalla" : "Entregado normalmente") + "
-" +
+      "EVALUACIÓN: " + TEMA + "\n" +
+      "Alumno/a: " + payload.apellido + ", " + payload.nombre + "\n" +
+      "Curso: " + payload.curso + "\n" +
+      "Código verificado: " + (payload.validado === false ? "No (confirmar con el/la docente)" : "Sí") + "\n" +
+      "Nota: " + payload.nota + " / 10  (" + payload.puntaje + " / 10 puntos)\n" +
+      "Estado: " + (cerradoPorSalir ? "Cerrado por salir de la pantalla" : "Entregado normalmente") + "\n" +
       "Fecha: " + fecha;
     document.getElementById("backup-text").value = texto;
   }
