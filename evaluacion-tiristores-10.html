@@ -338,34 +338,34 @@
 
   var questions = [
     {type:"mc", q:"¿Cuántas capas semiconductoras (uniones PN) tiene un SCR (tiristor) en su estructura básica?",
-     options:["Dos capas, con una sola unión PN","Tres capas, con dos uniones PN","Cuatro capas, estructura PNPN con tres uniones PN","Cinco capas, con cuatro uniones PN"], correct:2},
+     options:["Cuatro capas, en estructura PNPN, con tres uniones PN internas","Tres capas, en estructura PNP, con dos uniones PN internas","Dos capas, en estructura PN, con una única unión interna","Cinco capas, en estructura PNPNP, con cuatro uniones internas"], correct:0},
 
     {type:"mc", q:"¿Cuáles son los tres terminales de un SCR?",
-     options:["Base, colector y emisor","Ánodo, cátodo y compuerta (gate)","Drenador, fuente y compuerta","Positivo, negativo y neutro"], correct:1},
+     options:["Base, colector y emisor, igual que en un transistor bipolar","Drenador, fuente y compuerta, igual que en un MOSFET de potencia","Positivo, negativo y neutro, como en una fuente trifásica","Ánodo, cátodo y compuerta, igual que en un diodo controlado"], correct:3},
 
     {type:"mc", q:"Para que un SCR entre en conducción (se \"dispare\"), además del pulso de corriente en la compuerta, ¿qué condición debe cumplirse en el circuito principal?",
-     options:["El ánodo debe estar a un potencial negativo respecto del cátodo","El ánodo debe estar a un potencial positivo respecto del cátodo","La compuerta debe estar conectada directamente al ánodo","No es necesaria ninguna otra condición"], correct:1},
+     options:["El ánodo debe estar a un potencial negativo respecto del cátodo","El ánodo debe estar a un potencial positivo respecto del cátodo","La compuerta debe estar conectada directamente al cátodo","No es necesaria ninguna otra condición en el circuito"], correct:1},
 
     {type:"mc", q:"Una vez que un SCR entra en conducción, ¿qué ocurre si se deja de aplicar la señal de disparo en la compuerta?",
-     options:["El SCR se apaga inmediatamente","El SCR sigue conduciendo mientras la corriente de ánodo sea mayor que la corriente de mantenimiento (IH)","El SCR empieza a oscilar entre encendido y apagado","El SCR entra en modo de ruptura inversa"], correct:1},
+     options:["El SCR se apaga de inmediato, apenas se retira la señal de la compuerta","El SCR empieza a oscilar de forma continua entre encendido y apagado","El SCR sigue conduciendo si la corriente de ánodo supera la de mantenimiento","El SCR pasa directamente a su región de ruptura inversa, sin intervención"], correct:2},
 
     {type:"mc", q:"¿Cómo se denomina la corriente mínima de ánodo necesaria para que el SCR permanezca en conducción una vez disparado?",
-     options:["Corriente de disparo (IGT)","Corriente de mantenimiento (IH, holding current)","Corriente de fuga inversa","Corriente de ruptura"], correct:1},
+     options:["Corriente de mantenimiento, la mínima que sostiene la conducción","Corriente de disparo, la que se aplica por la compuerta al inicio","Corriente de fuga inversa, la que circula con el tiristor cortado","Corriente de ruptura, la que provoca un disparo no controlado"], correct:0},
 
     {type:"mc", q:"¿Cuál es la forma habitual de llevar un SCR al corte (apagarlo) en un circuito de corriente alterna?",
-     options:["Aplicando un pulso negativo en la compuerta","La conmutación natural: la corriente de ánodo cae a cero en cada semiciclo","Invirtiendo la polaridad de la compuerta","Aumentando la tensión ánodo-cátodo"], correct:1},
+     options:["Aplicando un pulso negativo de corriente en la compuerta del SCR","Invirtiendo la polaridad de la compuerta respecto del cátodo","Aumentando progresivamente la tensión entre ánodo y cátodo","Por conmutación natural, cuando la corriente de ánodo cae a cero"], correct:3},
 
     {type:"mc", q:"¿Qué diferencia principal tiene un TRIAC respecto de un SCR?",
-     options:["El TRIAC solo conduce en un sentido, igual que el SCR","El TRIAC es bidireccional: puede conducir corriente en ambos sentidos (equivale a dos SCR en antiparalelo)","El TRIAC no tiene terminal de compuerta","El TRIAC solo funciona en corriente continua"], correct:1},
+     options:["El TRIAC conduce en un solo sentido, igual que el SCR convencional","El TRIAC es bidireccional, equivale a dos SCR conectados en antiparalelo","El TRIAC no cuenta con ningún terminal de compuerta para dispararse","El TRIAC solo puede utilizarse en circuitos de corriente continua"], correct:1},
 
     {type:"mc", q:"¿Qué es un DIAC y para qué se usa típicamente junto con un TRIAC?",
-     options:["Es un amplificador de corriente que reemplaza a la compuerta del TRIAC","Es un diodo bidireccional sin compuerta, usado para generar el pulso de disparo del TRIAC al alcanzar su tensión de ruptura","Es un capacitor usado para filtrar la señal de salida","Es un transistor de efecto de campo usado como protección"], correct:1},
+     options:["Un amplificador de corriente que reemplaza a la compuerta del TRIAC","Un capacitor que filtra armónicos en la señal de salida del circuito","Un diodo bidireccional sin compuerta, que dispara al TRIAC por ruptura","Un transistor de efecto de campo que protege al TRIAC de sobretensiones"], correct:2},
 
     {type:"mc", q:"En un circuito de control de fase (por ejemplo, un dimmer) con TRIAC, ¿qué efecto tiene retrasar el ángulo de disparo dentro de cada semiciclo?",
-     options:["Aumenta la potencia entregada a la carga","Reduce la potencia entregada a la carga, porque conduce durante una porción menor del semiciclo","No tiene ningún efecto sobre la potencia entregada","Invierte la polaridad de la carga"], correct:1},
+     options:["Reduce la potencia entregada, porque conduce menos tiempo por semiciclo","Aumenta la potencia entregada, porque conduce más tiempo por semiciclo","No modifica la potencia entregada a la carga en ningún caso","Invierte la polaridad de la tensión aplicada sobre la carga"], correct:0},
 
     {type:"mc", q:"¿Cuál de las siguientes es una aplicación típica de los tiristores (SCR/TRIAC)?",
-     options:["Amplificación de señales de audio de baja potencia","Control de potencia en cargas de corriente alterna (dimmers, control de velocidad de motores, rectificadores controlados)","Almacenamiento de datos digitales","Regulación de tensión en fuentes de referencia de precisión"], correct:1}
+     options:["Amplificación de señales de audio en equipos de baja potencia","Almacenamiento de datos digitales en memorias no volátiles","Regulación fina de tensión en fuentes de referencia estables","Control de potencia en cargas de corriente alterna, con dimmers"], correct:3}
   ]
 
   var PUNTOS_POR_PREGUNTA = 1;
