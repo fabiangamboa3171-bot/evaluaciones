@@ -285,7 +285,7 @@
 
   <footer>
     Sistema de evaluación interactiva · Electrónica Industrial
-    <div><a onclick="openTeacherPanel()">Acceso docente</a></div>
+    <div><a onclick="openTeacherPanel()">Acceso docente</a> · <a onclick="habilitarReingreso()">Reingreso autorizado</a></div>
     <div id="teacher-tag">Modo docente activo: sin bloqueo por salida ni envío a la planilla.</div>
   </footer>
 
@@ -311,6 +311,7 @@
   var STORAGE_KEY = "pendiente_trifasicos_v1";
   var COMPLETED_KEY = "completado_trifasicos_v1";
   var TEACHER_PASSWORD = "trifasicos2026";
+  var MATERIA = "Electrónica Industrial";
 
   // Bandas estilo código de colores de resistencias (0-9), se repiten cada 10 preguntas
   var RESISTOR_COLORS = ["#000000","#8a4a12","#d9362e","#f2871f","#f2c12e","#3f9142","#2f6fd9","#7c3aed","#8a8a8a","#f5efe3"];
@@ -461,7 +462,7 @@
           msg.textContent = "Código no encontrado. Revisalo bien antes de volver a intentar, o avisale a tu docente.";
           return;
         }
-        if(resp.usado && !resp.especial){
+        if(resp.usado && !resp.especial && !reingresoAutorizado){
           msg.style.color = "var(--bad)";
           msg.textContent = "Este código ya fue usado para entregar esta evaluación. Si creés que es un error, avisale a tu docente.";
           return;
@@ -697,14 +698,15 @@
     return {
       apellido: state.apellido,
       nombre: state.nombre,
-      curso: state.curso,
+      curso: state.curso + (reingresoAutorizado ? " (reingreso autorizado)" : ""),
       codigo: state.codigo,
       validado: state.validado,
       tema: TEMA,
       hoja: HOJA_DESTINO,
       nota: score.nota,
       puntaje: score.puntaje,
-      cerradoPorSalir: !!cerradoPorSalir
+      cerradoPorSalir: !!cerradoPorSalir,
+      reingreso: !!reingresoAutorizado
     };
   }
 
@@ -822,15 +824,13 @@
       body.appendChild(tr);
     });
 
-    var fecha = new Date().toLocaleString("es-AR");
+    function dosDigitos(n){ return (n < 10 ? "0" : "") + n; }
+    var hoy = new Date();
+    var fecha = dosDigitos(hoy.getDate()) + "/" + dosDigitos(hoy.getMonth() + 1) + "/" + hoy.getFullYear();
+    // Formato pedido por el docente: MATERIA - TEMA - FECHA - CURSO - NOMBRE Y APELLIDO - NOTA
     var texto =
-      "EVALUACIÓN: " + TEMA + "\n" +
-      "Alumno/a: " + payload.apellido + ", " + payload.nombre + "\n" +
-      "Curso: " + payload.curso + "\n" +
-      "Código verificado: " + (payload.validado === false ? "No (confirmar con el/la docente)" : "Sí") + "\n" +
-      "Nota: " + payload.nota + " / 10  (" + payload.puntaje + " / 10 puntos)\n" +
-      "Estado: " + (cerradoPorSalir ? "Cerrado por salir de la pantalla" : "Entregado normalmente") + "\n" +
-      "Fecha: " + fecha;
+      MATERIA + " - " + TEMA + " - " + fecha + " - " + state.curso + " - " +
+      payload.nombre + " " + payload.apellido + " - Nota: " + String(payload.nota).replace(".", ",") + "/10";
     document.getElementById("backup-text").value = texto;
   }
 
@@ -913,6 +913,64 @@
 
   // Reintentar envíos pendientes de sesiones anteriores en este mismo navegador
   retryPendingSubmission();
+
+  // ======= REINGRESO AUTORIZADO POR EL DOCENTE =======
+  // El docente puede habilitar que un alumno vuelva a entrar (por ejemplo, después de
+  // que la evaluación se cerró por salir de la pantalla). El código NO está escrito
+  // acá: solo se guarda una derivación PBKDF2 irreversible para compararlo.
+  var reingresoAutorizado = false;
+  var REINGRESO_SALT = "evaluaciones-reingreso-v1";
+  var REINGRESO_ITER = 200000;
+  var REINGRESO_HASH = "4800451d5cd98e3c7fa58f8cd95b9b8771218aec06e2d0ca600ed2564de86e98";
+
+  function verificarCodigoReingreso(codigo){
+    try{
+      var enc = new TextEncoder();
+      return crypto.subtle.importKey("raw", enc.encode(codigo), "PBKDF2", false, ["deriveBits"])
+        .then(function(clave){
+          return crypto.subtle.deriveBits({name:"PBKDF2", salt:enc.encode(REINGRESO_SALT),
+            iterations:REINGRESO_ITER, hash:"SHA-256"}, clave, 256);
+        })
+        .then(function(bits){
+          var hex = Array.prototype.map.call(new Uint8Array(bits), function(b){
+            return (b < 16 ? "0" : "") + b.toString(16);
+          }).join("");
+          return hex === REINGRESO_HASH;
+        })
+        .catch(function(){ return false; });
+    }catch(e){
+      return Promise.resolve(false);
+    }
+  }
+
+  window.habilitarReingreso = function(){
+    var codigo = prompt("Código de habilitación docente para el reingreso:");
+    if(codigo === null) return;
+    codigo = String(codigo).trim();
+    if(!codigo) return;
+    verificarCodigoReingreso(codigo).then(function(ok){
+      if(!ok){ alert("Código de habilitación incorrecto."); return; }
+      reingresoAutorizado = true;
+      try{ localStorage.removeItem(COMPLETED_KEY); }catch(e){}
+      state.finished = false;
+      state.started = false;
+      state.current = 0;
+      state.answers = new Array(questions.length).fill(null);
+      alumnoValidado = null;
+      var mostrar = {"login-screen":"block", "codigo-step":"block"};
+      ["already-done-screen","result-screen","quiz-screen","confirm-step","manual-step",
+       "codigo-msg","login-screen","codigo-step"].forEach(function(id){
+        var el = document.getElementById(id);
+        if(el) el.style.display = mostrar[id] || "none";
+      });
+      var lo = document.getElementById("lock-overlay");
+      if(lo) lo.style.display = "none";
+      var inp = document.getElementById("in-codigo");
+      if(inp) inp.value = "";
+      alert("Reingreso habilitado. El alumno tiene que volver a ingresar su código y rendir de nuevo. " +
+            "Esta nueva entrega queda marcada como \"reingreso autorizado\" en la planilla.");
+    });
+  };
 
 })();
 </script>
