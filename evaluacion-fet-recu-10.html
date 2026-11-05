@@ -1133,25 +1133,54 @@
   };
 
   // Control del docente: habilita (o vuelve a ocultar) la devolución para TODO el curso de una vez.
+  // Panel dentro de la página (sin prompt/confirm, que algunos navegadores del celular bloquean).
   window.habilitarDevolucion = function(){
-    var codigo = prompt("Código docente para la devolución:");
-    if(codigo === null) return;
-    codigo = String(codigo).trim();
-    if(!codigo) return;
-    var habilitar = confirm("¿HABILITAR la devolución para todos los que rindieron \"" + TEMA + "\"?\n\nAceptar = habilitar · Cancelar = volver a ocultarla");
-    jsonpDevolucion({ accion: "habilitar_devolucion", tema: TEMA, clave: codigo, valor: habilitar ? "1" : "0" }, function(resp){
-      if(resp && resp.ok){
-        alert(resp.habilitada
-          ? "Devolución HABILITADA. Los alumnos la ven en su pantalla en menos de un minuto (o al volver a abrir el examen)."
-          : "Devolución OCULTA otra vez.");
-      } else if(resp && resp.error === "clave incorrecta"){
-        alert("Código incorrecto.");
-      } else {
-        alert("No se pudo conectar con la planilla. Probá de nuevo en unos segundos.");
-      }
-    });
+    var viejo = document.getElementById("panel-devolucion");
+    if(viejo) viejo.parentNode.removeChild(viejo);
+    var p = document.createElement("div");
+    p.id = "panel-devolucion";
+    p.style.cssText = "position:fixed;inset:0;background:rgba(40,25,10,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;";
+    p.innerHTML =
+      '<div class="card" style="max-width:420px;width:100%;">' +
+        '<div class="eyebrow">Docente</div>' +
+        '<h2 style="margin:4px 0 8px;">Devolución del examen</h2>' +
+        '<p class="lead" style="font-size:14px;">' + escapeHtml(TEMA) + '</p>' +
+        '<label for="in-clave-devol">Código docente</label>' +
+        '<input type="password" id="in-clave-devol" inputmode="numeric" autocomplete="off" placeholder="Código (solo números)">' +
+        '<div class="btn-row" style="flex-wrap:wrap;gap:8px;">' +
+          '<button class="btn" id="btn-devol-si">Habilitar devolución</button>' +
+          '<button class="btn secondary" id="btn-devol-no">Ocultar devolución</button>' +
+          '<button class="btn secondary" id="btn-devol-cerrar">Cerrar</button>' +
+        '</div>' +
+        '<div id="devol-panel-msg" style="margin-top:12px;font-size:14px;font-weight:600;"></div>' +
+      '</div>';
+    document.body.appendChild(p);
+    var msg = document.getElementById("devol-panel-msg");
+    var enviar = function(valor){
+      var codigo = String(document.getElementById("in-clave-devol").value || "").replace(/\D/g, "");
+      if(!codigo){ msg.style.color = "#a3311b"; msg.textContent = "Escribí el código."; return; }
+      msg.style.color = ""; msg.textContent = "Conectando con la planilla…";
+      document.getElementById("btn-devol-si").disabled = true;
+      document.getElementById("btn-devol-no").disabled = true;
+      jsonpDevolucion({ accion: "habilitar_devolucion", tema: TEMA, clave: codigo, valor: valor }, function(resp){
+        document.getElementById("btn-devol-si").disabled = false;
+        document.getElementById("btn-devol-no").disabled = false;
+        if(resp && resp.ok){
+          msg.style.color = "#215c37";
+          msg.textContent = resp.habilitada
+            ? "✔ Devolución HABILITADA. Los alumnos la ven en menos de un minuto (o al volver a abrir el examen)."
+            : "✔ Devolución OCULTA.";
+        } else if(resp && resp.error === "clave incorrecta"){
+          msg.style.color = "#a3311b"; msg.textContent = "Código incorrecto.";
+        } else {
+          msg.style.color = "#a3311b"; msg.textContent = "No se pudo conectar con la planilla. Probá de nuevo en unos segundos.";
+        }
+      });
+    };
+    document.getElementById("btn-devol-si").onclick = function(){ enviar("1"); };
+    document.getElementById("btn-devol-no").onclick = function(){ enviar("0"); };
+    document.getElementById("btn-devol-cerrar").onclick = function(){ p.parentNode.removeChild(p); };
   };
-
   renderDevolucionesGuardadas();
 
 })();
