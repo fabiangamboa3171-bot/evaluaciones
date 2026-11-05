@@ -192,11 +192,15 @@
   table.tt{border-collapse:collapse; font-size:16px; margin:4px 0;}
   table.tt th, table.tt td{border:1.5px solid var(--border); padding:6px 18px; text-align:center;}
   table.tt th{background:var(--cream-2); color:var(--copper-dark);}
+  .fila-expl td.expl{font-size:12.5px; color:var(--ink-soft); background:#fbf6ee; border-bottom:1px solid var(--border); padding:6px 8px 10px;}
+  #devol-guardadas{width:100%; max-width:720px; margin-bottom:14px;}
 </style>
 </head>
 <body>
 
 <div id="app">
+
+  <div id="devol-guardadas" style="display:none;"></div>
 
   <!-- PANTALLA DE BLOQUEO POR REINTENTO (alumno que ya rindió en este dispositivo) -->
   <div class="card" id="already-done-screen" style="display:none;">
@@ -280,6 +284,7 @@
         <div class="score-sub" id="score-detalle">- / 10 puntos</div>
         <div id="status-pill-wrap"></div>
       </div>
+      <div class="warn-box" id="devolucion-box" style="display:none; margin-top:16px;"></div>
       <table class="review" id="review-table">
         <thead>
           <tr><th>#</th><th>Pregunta</th><th>Tu respuesta</th><th>Correcta</th></tr>
@@ -296,7 +301,7 @@
 
   <footer>
     Sistema de evaluación interactiva · Electrónica Industrial
-    <div><a onclick="openTeacherPanel()">Acceso docente</a> · <a onclick="habilitarReingreso()">Reingreso autorizado</a></div>
+    <div><a onclick="openTeacherPanel()">Acceso docente</a> · <a onclick="habilitarReingreso()">Reingreso autorizado</a> · <a onclick="habilitarDevolucion()">Habilitar devolución</a></div>
     <div id="teacher-tag">Modo docente activo: sin bloqueo por salida ni envío a la planilla.</div>
   </footer>
 
@@ -810,6 +815,7 @@
 
     document.getElementById("login-screen").style.display = "none";
     document.getElementById("quiz-screen").style.display = "block";
+    renderDevolucionesGuardadas();
 
     buildProgressTrack();
     renderQuestion();
@@ -1134,6 +1140,7 @@
         "<td>" + escapeHtml(correcta) + "</td>";
       body.appendChild(tr);
     });
+    prepararDevolucion(payload);
 
     function dosDigitos(n){ return (n < 10 ? "0" : "") + n; }
     var hoy = new Date();
@@ -1282,6 +1289,268 @@
             "Esta nueva entrega queda marcada como \"reingreso autorizado\" en la planilla.");
     });
   };
+
+
+  // ======= EXPLICACIONES Y PISTAS (devolución formativa) =======
+  var REGLA_COMPUERTA = {
+    AND: "AND (producto lógico): Y = 1 solamente cuando A = 1 y B = 1; en los demás casos Y = 0. Tabla: 0, 0, 0, 1.",
+    OR: "OR (suma lógica): Y = 0 solamente cuando A = 0 y B = 0; con que una entrada valga 1, Y = 1. Tabla: 0, 1, 1, 1.",
+    NAND: "NAND (AND negada): es lo contrario de la AND. Y = 0 solamente cuando A = 1 y B = 1; en los demás casos Y = 1. Tabla: 1, 1, 1, 0.",
+    NOR: "NOR (OR negada): es lo contrario de la OR. Y = 1 solamente cuando A = 0 y B = 0; con que una entrada valga 1, Y = 0. Tabla: 1, 0, 0, 0."
+  };
+  function compuertaPorTabla(t){
+    var m = {"0001":"AND", "0111":"OR", "1110":"NAND", "1000":"NOR"};
+    return m[t] || "";
+  }
+  function limpio(v){ return String(v == null ? "" : v).replace(/\s+/g, ""); }
+
+  function explicacionPregunta(q, i, ans){
+    ans = ans || [];
+    if(i === 0){
+      return "Una señal ANALÓGICA varía en forma continua y puede tomar infinitos valores dentro de un rango " +
+        "(temperatura, sonido, presión, luz, la tensión de la red). Una señal DIGITAL toma solo valores discretos, " +
+        "normalmente dos estados (0/1, abierto/cerrado, presionado/no presionado), o es información codificada en bits (USB, pendrive, un contador).";
+    }
+    if(i === 1 || i === 2){
+      var n = parseInt((q.q.match(/decimal (\d+)/) || [])[1], 10);
+      var pasos = [], x = n;
+      while(x > 0){ pasos.push(x + " ÷ 2 = " + Math.floor(x / 2) + ", resto " + (x % 2)); x = Math.floor(x / 2); }
+      var bin = n.toString(2);
+      var t = "Se divide por 2 sucesivamente y se anotan los restos: " + pasos.join("; ") +
+        ". Los restos se leen de ABAJO hacia ARRIBA (del último al primero): " + n + " = " + bin + ".";
+      var dada = limpio(ans[0]);
+      if(dada && dada !== bin && /^[01]+$/.test(dada)){
+        var dadaSinCeros = dada.replace(/^0+/, "");
+        if(dadaSinCeros.split("").reverse().join("").replace(/^0+/, "") === bin || dada.split("").reverse().join("") === bin){
+          t += " Pista: tu número tiene los bits en orden inverso — leíste los restos de arriba hacia abajo.";
+        } else {
+          t += " Pista: comprobá tu resultado pasándolo a decimal; " + dada + " en binario vale " + parseInt(dada, 2) + ", no " + n + ".";
+        }
+      }
+      return t;
+    }
+    if(i === 3){
+      var b = (q.q.match(/binario ([01]+)/) || [])[1] || "";
+      var L = b.length, terminos = [], suma = 0;
+      for(var k = 0; k < L; k++){
+        var peso = Math.pow(2, L - 1 - k);
+        if(b.charAt(k) === "1"){ terminos.push(String(peso)); suma += peso; }
+      }
+      var t3 = "Cada bit vale una potencia de 2 según su posición, empezando por la derecha (1, 2, 4, 8, 16, 32, 64, 128…). " +
+        "Se suman solo las posiciones donde hay un 1: " + terminos.join(" + ") + " = " + suma + ".";
+      var d3 = parseInt(limpio(ans[0]), 10);
+      if(!isNaN(d3) && d3 !== suma){
+        var inv = parseInt(b.split("").reverse().join(""), 2);
+        if(d3 === inv) t3 += " Pista: tomaste las posiciones al revés — el bit de la DERECHA es el que vale 1 (2⁰).";
+      }
+      return t3;
+    }
+    if(i === 4){
+      return "Suma lógica (OR): Y = A + B + C vale 1 si AL MENOS UNA variable vale 1, y vale 0 solamente cuando A = B = C = 0. " +
+        "Ojo: no es una suma común — en lógica 1 + 1 = 1.";
+    }
+    if(i === 5){
+      return "Producto lógico (AND): Y = A · B · C vale 1 solamente cuando TODAS las variables valen 1; con que una sola valga 0, Y = 0.";
+    }
+    if(i === 6){
+      var bits = ((q.parts[1] && q.parts[1].label) || "").match(/([01]{4})/);
+      bits = bits ? bits[1] : "";
+      var comp = q.parts[1] ? q.parts[1].show : "";
+      var t6 = "El complemento (negación) invierte cada valor: 1 pasa a 0 y 0 pasa a 1. Para una variable: A' = 1 − A. " +
+        "Para un número binario se invierte bit por bit: " + bits + " → " + comp + ".";
+      var d6 = limpio(ans[1]);
+      if(d6 && d6 === bits) t6 += " Pista: escribiste el mismo número sin invertir los bits.";
+      return t6;
+    }
+    if(i === 7){
+      var g8 = q.parts[0].show;
+      return "Para reconocer la compuerta, mirá en qué fila la salida es distinta de las otras tres. " + REGLA_COMPUERTA[g8];
+    }
+    if(i === 8){
+      var g9 = compuertaPorTabla(q.parts.map(function(p){ return p.show; }).join(""));
+      return "El dibujo es una " + g9 + ". Forma de 'D' = AND; forma curva de escudo = OR; el circulito en la salida significa negación " +
+        "(AND con circulito = NAND, OR con circulito = NOR). " + (REGLA_COMPUERTA[g9] || "");
+    }
+    if(i === 9){
+      var g10 = q.parts[0].show;
+      var porQue = {
+        AND: "La prensa baja (Y = 1) únicamente cuando los dos pulsadores están presionados (A = 1 y B = 1).",
+        OR: "La luz se enciende (Y = 1) con que se presione cualquiera de los dos pulsadores; solo queda apagada si A = 0 y B = 0.",
+        NAND: "La luz de aviso se apaga (Y = 0) únicamente cuando las dos puertas están cerradas (A = 1 y B = 1); en los demás casos queda encendida.",
+        NOR: "La cinta avanza (Y = 1) únicamente cuando ningún sensor detecta a alguien (A = 0 y B = 0); si cualquiera detecta, se detiene."
+      };
+      return porQue[g10] + " Esa es la " + REGLA_COMPUERTA[g10];
+    }
+    return "";
+  }
+
+  // ======= DEVOLUCIÓN FORMATIVA (la habilita el docente cuando termina la clase) =======
+  // Al terminar, el alumno ve su nota; la tabla con sus respuestas, las correctas y una
+  // explicación de cada punto queda guardada en este dispositivo y se muestra recién
+  // cuando el docente la habilita (para todo el curso a la vez) desde "Habilitar devolución".
+  var DEVOLUCION_KEY = STORAGE_KEY + "_devolucion";
+  var devolucionTimer = null;
+
+  function jsonpDevolucion(params, alTerminar){
+    var cb = "__devol_cb_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
+    var terminado = false;
+    var script = document.createElement("script");
+    var limpiar = function(){
+      terminado = true;
+      try{ window[cb] = function(){}; }catch(e){}
+      if(script.parentNode) script.parentNode.removeChild(script);
+    };
+    var t = setTimeout(function(){ if(!terminado){ limpiar(); alTerminar(null); } }, 20000);
+    window[cb] = function(resp){ if(terminado) return; clearTimeout(t); limpiar(); alTerminar(resp); };
+    var qs = [];
+    for(var k in params){ qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k])); }
+    script.src = WEBHOOK_URL + "?" + qs.join("&") + "&callback=" + cb;
+    script.onerror = function(){ if(terminado) return; clearTimeout(t); limpiar(); alTerminar(null); };
+    document.body.appendChild(script);
+  }
+
+  function leerDevoluciones(){
+    try{
+      var x = JSON.parse(localStorage.getItem(DEVOLUCION_KEY) || "[]");
+      return Array.isArray(x) ? x : [];
+    }catch(e){ return []; }
+  }
+  function guardarDevoluciones(lista){
+    try{ localStorage.setItem(DEVOLUCION_KEY, JSON.stringify(lista.slice(-6))); }catch(e){}
+  }
+
+  function textoExplicacion(qData, i){
+    var t = "";
+    try{ t = explicacionPregunta(qData, i, state.answers[i]) || ""; }catch(e){ t = ""; }
+    return t;
+  }
+
+  // Se llama al final de showResult(): agrega la explicación debajo de cada fila,
+  // guarda la devolución en el dispositivo y la oculta hasta que el docente la habilite.
+  function prepararDevolucion(payload){
+    var body = document.getElementById("review-body");
+    var filas = Array.prototype.slice.call(body.children);
+    filas.forEach(function(tr, i){
+      var expl = textoExplicacion(questions[i], i);
+      if(!expl) return;
+      var trE = document.createElement("tr");
+      trE.className = "fila-expl";
+      trE.innerHTML = '<td></td><td colspan="3" class="expl">💡 ' + escapeHtml(expl) + "</td>";
+      tr.parentNode.insertBefore(trE, tr.nextSibling);
+    });
+    var entrada = {
+      nombre: (payload.nombre || "") + " " + (payload.apellido || ""),
+      nota: payload.nota,
+      ts: Date.now(),
+      html: body.innerHTML
+    };
+    if(!state.modoDocente){
+      var lista = leerDevoluciones();
+      lista.push(entrada);
+      guardarDevoluciones(lista);
+    }
+    var tabla = document.getElementById("review-table");
+    var caja = document.getElementById("devolucion-box");
+    if(state.modoDocente){
+      tabla.style.display = "";
+      caja.style.display = "none";
+      return;
+    }
+    tabla.style.display = "none";
+    caja.style.display = "block";
+    caja.innerHTML = "<strong>Devolución pendiente.</strong> Tus respuestas, las correctas y la explicación de cada punto " +
+      "se van a mostrar acá cuando tu docente habilite la devolución (al terminar la clase). Podés dejar esta pantalla abierta " +
+      "o volver a abrir el examen más tarde en este mismo dispositivo.";
+    consultarDevolucion(function(habilitada){
+      if(habilitada){ mostrarTablaDevolucion(); }
+      else { iniciarSondeoDevolucion(); }
+    });
+  }
+
+  function consultarDevolucion(alTerminar){
+    jsonpDevolucion({ accion: "estado_devolucion", tema: TEMA }, function(resp){
+      alTerminar(!!(resp && resp.habilitada));
+    });
+  }
+
+  function iniciarSondeoDevolucion(){
+    if(devolucionTimer) clearInterval(devolucionTimer);
+    devolucionTimer = setInterval(function(){
+      consultarDevolucion(function(habilitada){
+        if(habilitada){ clearInterval(devolucionTimer); devolucionTimer = null; mostrarTablaDevolucion(); }
+      });
+    }, 20000);
+  }
+
+  function mostrarTablaDevolucion(){
+    var tabla = document.getElementById("review-table");
+    var caja = document.getElementById("devolucion-box");
+    tabla.style.display = "";
+    caja.style.display = "block";
+    caja.innerHTML = "<strong>Devolución habilitada.</strong> Revisá cada punto: en verde lo que respondiste bien, en rojo lo que hay que repasar, y la explicación debajo.";
+  }
+
+  // Devoluciones guardadas en este dispositivo (para quien cerró la página antes de que se habilitara)
+  function renderDevolucionesGuardadas(){
+    var cont = document.getElementById("devol-guardadas");
+    if(!cont) return;
+    var lista = leerDevoluciones();
+    if(!lista.length || state.started){ cont.style.display = "none"; cont.innerHTML = ""; return; }
+    cont.style.display = "block";
+    var h = '<div class="card devol-card"><div class="eyebrow">Devolución</div>' +
+      '<p class="lead" style="margin-bottom:10px;">Este dispositivo tiene guardada la devolución de esta evaluación:</p>';
+    lista.forEach(function(d, idx){
+      h += '<div class="btn-row" style="margin-top:6px;"><button class="btn secondary" onclick="verDevolucionGuardada(' + idx + ')">Ver devolución de ' +
+        escapeHtml(String(d.nombre || "").trim() || "alumno") + " (nota " + escapeHtml(String(d.nota).replace(".", ",")) + ")</button></div>";
+    });
+    h += '<div id="devol-guardada-msg" style="margin-top:10px; font-size:13.5px; font-weight:600;"></div>' +
+      '<div id="devol-guardada-tabla" style="display:none;"><table class="review"><thead><tr><th>#</th><th>Pregunta</th><th>Tu respuesta</th><th>Correcta</th></tr></thead>' +
+      '<tbody id="devol-guardada-body"></tbody></table></div></div>';
+    cont.innerHTML = h;
+  }
+
+  window.verDevolucionGuardada = function(idx){
+    var lista = leerDevoluciones();
+    var d = lista[idx];
+    if(!d) return;
+    var msg = document.getElementById("devol-guardada-msg");
+    var wrap = document.getElementById("devol-guardada-tabla");
+    msg.style.color = "";
+    msg.textContent = "Consultando si tu docente ya habilitó la devolución…";
+    wrap.style.display = "none";
+    consultarDevolucion(function(habilitada){
+      if(habilitada){
+        msg.textContent = "Devolución de " + String(d.nombre || "").trim() + " · nota " + String(d.nota).replace(".", ",") + "/10";
+        document.getElementById("devol-guardada-body").innerHTML = d.html;
+        wrap.style.display = "block";
+      } else {
+        msg.style.color = "#7a3a1a";
+        msg.textContent = "Todavía no está habilitada. Tu docente la habilita cuando termina la clase; probá de nuevo más tarde.";
+      }
+    });
+  };
+
+  // Control del docente: habilita (o vuelve a ocultar) la devolución para TODO el curso de una vez.
+  window.habilitarDevolucion = function(){
+    var codigo = prompt("Código docente para la devolución:");
+    if(codigo === null) return;
+    codigo = String(codigo).trim();
+    if(!codigo) return;
+    var habilitar = confirm("¿HABILITAR la devolución para todos los que rindieron \"" + TEMA + "\"?\n\nAceptar = habilitar · Cancelar = volver a ocultarla");
+    jsonpDevolucion({ accion: "habilitar_devolucion", tema: TEMA, clave: codigo, valor: habilitar ? "1" : "0" }, function(resp){
+      if(resp && resp.ok){
+        alert(resp.habilitada
+          ? "Devolución HABILITADA. Los alumnos la ven en su pantalla en menos de un minuto (o al volver a abrir el examen)."
+          : "Devolución OCULTA otra vez.");
+      } else if(resp && resp.error === "clave incorrecta"){
+        alert("Código incorrecto.");
+      } else {
+        alert("No se pudo conectar con la planilla. Probá de nuevo en unos segundos.");
+      }
+    });
+  };
+
+  renderDevolucionesGuardadas();
 
 })();
 </script>
