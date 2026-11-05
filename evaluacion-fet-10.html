@@ -672,6 +672,29 @@
   });
 
   // ======= ENVÍO DE RESULTADOS =======
+  // Detalle de respuestas para la planilla (columna "Detalle"): respuesta dada vs correcta por pregunta.
+  function armarDetalle(){
+    try{
+      var LETRAS = "ABCDEFGH";
+      return questions.map(function(q, i){
+        var a = state.answers[i];
+        if(q.type === "parts" || q.type === "fill"){
+          var items = (q.type === "parts") ? q.parts : q.blanks;
+          var arr = a || [];
+          var dada = items.map(function(p, pi){
+            var v = (arr[pi] !== undefined && arr[pi] !== null && String(arr[pi]).trim() !== "") ? String(arr[pi]).trim() : "-";
+            return v;
+          }).join(", ");
+          var corr = items.map(function(p){ return p.show; }).join(", ");
+          var pts = (typeof questionScore === "function") ? " [" + (Math.round(questionScore(i) * 100) / 100) + " pts]" : "";
+          return "P" + (i + 1) + ": " + dada + " (correcta: " + corr + ")" + pts;
+        }
+        var dadaL = (a === null || a === undefined) ? "-" : LETRAS.charAt(a);
+        return "P" + (i + 1) + ": " + dadaL + (a === q.correct ? " OK" : " X (correcta: " + LETRAS.charAt(q.correct) + ")");
+      }).join(" | ");
+    }catch(e){ return "error al armar detalle: " + e.message; }
+  }
+
   function buildPayload(cerradoPorSalir){
     var score = computeScore();
     return {
@@ -685,7 +708,8 @@
       nota: score.nota,
       puntaje: score.puntaje,
       cerradoPorSalir: !!cerradoPorSalir,
-      reingreso: !!reingresoAutorizado
+      reingreso: !!reingresoAutorizado,
+      detalle: armarDetalle()
     };
   }
 
