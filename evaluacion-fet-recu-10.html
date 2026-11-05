@@ -181,11 +181,15 @@
     background:#fdf1de; border:1px dashed var(--copper); color:var(--copper-dark);
     font-size:12.5px; font-weight:600; text-align:center;
   }
+  .fila-expl td.expl{font-size:12.5px; color:var(--ink-soft); background:#fbf6ee; border-bottom:1px solid var(--border); padding:6px 8px 10px;}
+  #devol-guardadas{width:100%; max-width:720px; margin-bottom:14px;}
 </style>
 </head>
 <body>
 
 <div id="app">
+
+  <div id="devol-guardadas" style="display:none;"></div>
 
   <!-- PANTALLA DE BLOQUEO POR REINTENTO (alumno que ya rindió en este dispositivo) -->
   <div class="card" id="already-done-screen" style="display:none;">
@@ -269,6 +273,7 @@
         <div class="score-sub" id="score-detalle">- / 10 puntos</div>
         <div id="status-pill-wrap"></div>
       </div>
+      <div class="warn-box" id="devolucion-box" style="display:none; margin-top:16px;"></div>
       <table class="review" id="review-table">
         <thead>
           <tr><th>#</th><th>Pregunta</th><th>Tu respuesta</th><th>Correcta</th></tr>
@@ -285,7 +290,7 @@
 
   <footer>
     Sistema de evaluación interactiva · Electrónica
-    <div><a onclick="openTeacherPanel()">Acceso docente</a> · <a onclick="habilitarReingreso()">Reingreso autorizado</a></div>
+    <div><a onclick="openTeacherPanel()">Acceso docente</a> · <a onclick="habilitarReingreso()">Reingreso autorizado</a> · <a onclick="habilitarDevolucion()">Habilitar devolución</a></div>
     <div id="teacher-tag">Modo docente activo: sin bloqueo por salida ni envío a la planilla.</div>
   </footer>
 
@@ -339,34 +344,34 @@
 
   var questions = [
     {type:"mc", q:"¿Cuáles son los tres terminales de un transistor FET?",
-     options:["Base, Colector y Emisor","Ánodo, Cátodo y Compuerta","Gate, Drain y Source","Entrada, Salida y Masa"], correct:2},
+     options:["Base, Colector y Emisor","Ánodo, Cátodo y Compuerta","Gate, Drain y Source","Entrada, Salida y Masa"], correct:2, expl:"El FET tiene Gate (compuerta), Drain (drenador) y Source (fuente). Base, Colector y Emisor son los terminales del BJT; Ánodo, Cátodo y Compuerta, los de los tiristores."},
 
     {type:"mc", q:"Prácticamente no circula corriente por el Gate de un MOSFET porque:",
-     options:["El Gate está aislado del canal por una capa de óxido","El Gate está conectado internamente al Source","El canal tiene una resistencia muy baja","El Drain absorbe toda la corriente de entrada"], correct:0},
+     options:["El Gate está aislado del canal por una capa de óxido","El Gate está conectado internamente al Source","El canal tiene una resistencia muy baja","El Drain absorbe toda la corriente de entrada"], correct:0, expl:"En el MOSFET el Gate está separado del canal por una capa finísima de óxido de silicio (SiO₂), que es aislante. Por eso la corriente de Gate es prácticamente nula y la impedancia de entrada es altísima."},
 
     {type:"mc", q:"En un MOSFET de enriquecimiento canal N, para que el transistor conduzca es necesario que:",
-     options:["VGS sea igual a cero volts","VGS sea negativa respecto del Source","VGS supere la tensión umbral VGS(th)","Circule corriente continua por el Gate"], correct:2},
+     options:["VGS sea igual a cero volts","VGS sea negativa respecto del Source","VGS supere la tensión umbral VGS(th)","Circule corriente continua por el Gate"], correct:2, expl:"Un MOSFET de enriquecimiento canal N está cortado con VGS = 0 V. Recién conduce cuando VGS supera la tensión umbral VGS(th), que es la que forma el canal entre Drain y Source."},
 
     {type:"mc", q:"¿Por qué se dice que el FET es un dispositivo unipolar?",
-     options:["Porque conduce la corriente en un solo sentido, como un diodo","Porque la corriente la transporta un solo tipo de portador (electrones o huecos)","Porque tiene una única unión PN entre el Gate y el canal","Porque funciona con una sola fuente de alimentación continua"], correct:1},
+     options:["Porque conduce la corriente en un solo sentido, como un diodo","Porque la corriente la transporta un solo tipo de portador (electrones o huecos)","Porque tiene una única unión PN entre el Gate y el canal","Porque funciona con una sola fuente de alimentación continua"], correct:1, expl:"Se llama unipolar porque la corriente la transporta un solo tipo de portador: electrones (canal N) o huecos (canal P). El BJT, en cambio, es bipolar: conduce con los dos tipos de portadores."},
 
     {type:"mc", q:"Comparado con el MOSFET, una desventaja del IGBT es que:",
-     options:["Conmuta a frecuencias más bajas porque tarda más en apagarse","Necesita una corriente de base permanente para conducir","Tiene una impedancia de entrada mucho más baja","No puede trabajar con tensiones mayores a 50 V"], correct:0},
+     options:["Conmuta a frecuencias más bajas porque tarda más en apagarse","Necesita una corriente de base permanente para conducir","Tiene una impedancia de entrada mucho más baja","No puede trabajar con tensiones mayores a 50 V"], correct:0, expl:"El IGBT tarda más en apagarse (tiene una 'corriente de cola' por su parte bipolar), así que trabaja a frecuencias de conmutación más bajas que el MOSFET. Se controla por tensión, tiene alta impedancia de entrada y maneja tensiones altas."},
 
     {type:"mc", q:"Al manipular un MOSFET conviene usar pulsera antiestática porque:",
-     options:["El encapsulado se calienta mucho al tocarlo","El Drain puede cortocircuitarse con el Source","Una descarga electrostática puede perforar el óxido del Gate","Se descarga la capacidad interna del canal"], correct:2},
+     options:["El encapsulado se calienta mucho al tocarlo","El Drain puede cortocircuitarse con el Source","Una descarga electrostática puede perforar el óxido del Gate","Se descarga la capacidad interna del canal"], correct:2, expl:"El óxido del Gate es tan delgado que la electricidad estática del cuerpo puede perforarlo y dañar el transistor para siempre. La pulsera antiestática descarga esa electricidad a tierra."},
 
     {type:"mc", q:"¿Qué significa la sigla IGBT?",
-     options:["Transistor Integrado de Ganancia Básica","Transistor de Gate con Base Térmica","Transistor Industrial de Gran Banda","Transistor Bipolar de Compuerta Aislada"], correct:3},
+     options:["Transistor Integrado de Ganancia Básica","Transistor de Gate con Base Térmica","Transistor Industrial de Gran Banda","Transistor Bipolar de Compuerta Aislada"], correct:3, expl:"IGBT viene del inglés Insulated Gate Bipolar Transistor: Transistor Bipolar de Compuerta Aislada."},
 
     {type:"mc", q:"El IGBT combina en un solo dispositivo:",
-     options:["La entrada del JFET y la salida de un diodo zener","La entrada del MOSFET y la conducción de potencia del BJT","El disparo del SCR y la bidireccionalidad del TRIAC","La amplificación del BJT y el aislamiento de un optoacoplador"], correct:1},
+     options:["La entrada del JFET y la salida de un diodo zener","La entrada del MOSFET y la conducción de potencia del BJT","El disparo del SCR y la bidireccionalidad del TRIAC","La amplificación del BJT y el aislamiento de un optoacoplador"], correct:1, expl:"El IGBT tiene la entrada de un MOSFET (Gate aislado, control por tensión, casi sin corriente de entrada) y la salida de un BJT, que conduce mucha corriente con poca caída de tensión."},
 
     {type:"mc", q:"Los terminales de un IGBT se denominan:",
-     options:["Gate, Drain y Source","Base, Colector y Emisor","Ánodo, Cátodo y Gate","Gate, Colector y Emisor"], correct:3},
+     options:["Gate, Drain y Source","Base, Colector y Emisor","Ánodo, Cátodo y Gate","Gate, Colector y Emisor"], correct:3, expl:"El IGBT tiene Gate (de su parte MOSFET) y Colector y Emisor (de su parte BJT). Gate, Drain y Source son los del MOSFET."},
 
     {type:"mc", q:"Para una fuente conmutada de baja potencia que trabaja a varios cientos de kHz, el dispositivo de conmutación más adecuado es:",
-     options:["MOSFET","IGBT","BJT de potencia","JFET"], correct:0}
+     options:["MOSFET","IGBT","BJT de potencia","JFET"], correct:0, expl:"A cientos de kHz conviene el MOSFET: conmuta muy rápido y con pocas pérdidas en baja potencia. El IGBT es para potencias altas y frecuencias más bajas; el BJT de potencia es más lento y el JFET no se usa para conmutar potencia."}
   ];
 
   var PUNTOS_POR_PREGUNTA = 1;
@@ -526,6 +531,7 @@
 
     document.getElementById("login-screen").style.display = "none";
     document.getElementById("quiz-screen").style.display = "block";
+    renderDevolucionesGuardadas();
 
     buildProgressTrack();
     renderQuestion();
@@ -826,6 +832,7 @@
         "<td>" + escapeHtml(correcta) + "</td>";
       body.appendChild(tr);
     });
+    prepararDevolucion(payload);
 
     function dosDigitos(n){ return (n < 10 ? "0" : "") + n; }
     var hoy = new Date();
@@ -974,6 +981,178 @@
             "Esta nueva entrega queda marcada como \"reingreso autorizado\" en la planilla.");
     });
   };
+
+
+  // ======= EXPLICACIONES (devolución formativa) =======
+  function explicacionPregunta(q, i, ans){ return q.expl || ""; }
+
+  // ======= DEVOLUCIÓN FORMATIVA (la habilita el docente cuando termina la clase) =======
+  // Al terminar, el alumno ve su nota; la tabla con sus respuestas, las correctas y una
+  // explicación de cada punto queda guardada en este dispositivo y se muestra recién
+  // cuando el docente la habilita (para todo el curso a la vez) desde "Habilitar devolución".
+  var DEVOLUCION_KEY = STORAGE_KEY + "_devolucion";
+  var devolucionTimer = null;
+
+  function jsonpDevolucion(params, alTerminar){
+    var cb = "__devol_cb_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
+    var terminado = false;
+    var script = document.createElement("script");
+    var limpiar = function(){
+      terminado = true;
+      try{ window[cb] = function(){}; }catch(e){}
+      if(script.parentNode) script.parentNode.removeChild(script);
+    };
+    var t = setTimeout(function(){ if(!terminado){ limpiar(); alTerminar(null); } }, 20000);
+    window[cb] = function(resp){ if(terminado) return; clearTimeout(t); limpiar(); alTerminar(resp); };
+    var qs = [];
+    for(var k in params){ qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k])); }
+    script.src = WEBHOOK_URL + "?" + qs.join("&") + "&callback=" + cb;
+    script.onerror = function(){ if(terminado) return; clearTimeout(t); limpiar(); alTerminar(null); };
+    document.body.appendChild(script);
+  }
+
+  function leerDevoluciones(){
+    try{
+      var x = JSON.parse(localStorage.getItem(DEVOLUCION_KEY) || "[]");
+      return Array.isArray(x) ? x : [];
+    }catch(e){ return []; }
+  }
+  function guardarDevoluciones(lista){
+    try{ localStorage.setItem(DEVOLUCION_KEY, JSON.stringify(lista.slice(-6))); }catch(e){}
+  }
+
+  function textoExplicacion(qData, i){
+    var t = "";
+    try{ t = explicacionPregunta(qData, i, state.answers[i]) || ""; }catch(e){ t = ""; }
+    return t;
+  }
+
+  // Se llama al final de showResult(): agrega la explicación debajo de cada fila,
+  // guarda la devolución en el dispositivo y la oculta hasta que el docente la habilite.
+  function prepararDevolucion(payload){
+    var body = document.getElementById("review-body");
+    var filas = Array.prototype.slice.call(body.children);
+    filas.forEach(function(tr, i){
+      var expl = textoExplicacion(questions[i], i);
+      if(!expl) return;
+      var trE = document.createElement("tr");
+      trE.className = "fila-expl";
+      trE.innerHTML = '<td></td><td colspan="3" class="expl">💡 ' + escapeHtml(expl) + "</td>";
+      tr.parentNode.insertBefore(trE, tr.nextSibling);
+    });
+    var entrada = {
+      nombre: (payload.nombre || "") + " " + (payload.apellido || ""),
+      nota: payload.nota,
+      ts: Date.now(),
+      html: body.innerHTML
+    };
+    if(!state.modoDocente){
+      var lista = leerDevoluciones();
+      lista.push(entrada);
+      guardarDevoluciones(lista);
+    }
+    var tabla = document.getElementById("review-table");
+    var caja = document.getElementById("devolucion-box");
+    if(state.modoDocente){
+      tabla.style.display = "";
+      caja.style.display = "none";
+      return;
+    }
+    tabla.style.display = "none";
+    caja.style.display = "block";
+    caja.innerHTML = "<strong>Devolución pendiente.</strong> Tus respuestas, las correctas y la explicación de cada punto " +
+      "se van a mostrar acá cuando tu docente habilite la devolución (al terminar la clase). Podés dejar esta pantalla abierta " +
+      "o volver a abrir el examen más tarde en este mismo dispositivo.";
+    consultarDevolucion(function(habilitada){
+      if(habilitada){ mostrarTablaDevolucion(); }
+      else { iniciarSondeoDevolucion(); }
+    });
+  }
+
+  function consultarDevolucion(alTerminar){
+    jsonpDevolucion({ accion: "estado_devolucion", tema: TEMA }, function(resp){
+      alTerminar(!!(resp && resp.habilitada));
+    });
+  }
+
+  function iniciarSondeoDevolucion(){
+    if(devolucionTimer) clearInterval(devolucionTimer);
+    devolucionTimer = setInterval(function(){
+      consultarDevolucion(function(habilitada){
+        if(habilitada){ clearInterval(devolucionTimer); devolucionTimer = null; mostrarTablaDevolucion(); }
+      });
+    }, 20000);
+  }
+
+  function mostrarTablaDevolucion(){
+    var tabla = document.getElementById("review-table");
+    var caja = document.getElementById("devolucion-box");
+    tabla.style.display = "";
+    caja.style.display = "block";
+    caja.innerHTML = "<strong>Devolución habilitada.</strong> Revisá cada punto: en verde lo que respondiste bien, en rojo lo que hay que repasar, y la explicación debajo.";
+  }
+
+  // Devoluciones guardadas en este dispositivo (para quien cerró la página antes de que se habilitara)
+  function renderDevolucionesGuardadas(){
+    var cont = document.getElementById("devol-guardadas");
+    if(!cont) return;
+    var lista = leerDevoluciones();
+    if(!lista.length || state.started){ cont.style.display = "none"; cont.innerHTML = ""; return; }
+    cont.style.display = "block";
+    var h = '<div class="card devol-card"><div class="eyebrow">Devolución</div>' +
+      '<p class="lead" style="margin-bottom:10px;">Este dispositivo tiene guardada la devolución de esta evaluación:</p>';
+    lista.forEach(function(d, idx){
+      h += '<div class="btn-row" style="margin-top:6px;"><button class="btn secondary" onclick="verDevolucionGuardada(' + idx + ')">Ver devolución de ' +
+        escapeHtml(String(d.nombre || "").trim() || "alumno") + " (nota " + escapeHtml(String(d.nota).replace(".", ",")) + ")</button></div>";
+    });
+    h += '<div id="devol-guardada-msg" style="margin-top:10px; font-size:13.5px; font-weight:600;"></div>' +
+      '<div id="devol-guardada-tabla" style="display:none;"><table class="review"><thead><tr><th>#</th><th>Pregunta</th><th>Tu respuesta</th><th>Correcta</th></tr></thead>' +
+      '<tbody id="devol-guardada-body"></tbody></table></div></div>';
+    cont.innerHTML = h;
+  }
+
+  window.verDevolucionGuardada = function(idx){
+    var lista = leerDevoluciones();
+    var d = lista[idx];
+    if(!d) return;
+    var msg = document.getElementById("devol-guardada-msg");
+    var wrap = document.getElementById("devol-guardada-tabla");
+    msg.style.color = "";
+    msg.textContent = "Consultando si tu docente ya habilitó la devolución…";
+    wrap.style.display = "none";
+    consultarDevolucion(function(habilitada){
+      if(habilitada){
+        msg.textContent = "Devolución de " + String(d.nombre || "").trim() + " · nota " + String(d.nota).replace(".", ",") + "/10";
+        document.getElementById("devol-guardada-body").innerHTML = d.html;
+        wrap.style.display = "block";
+      } else {
+        msg.style.color = "#7a3a1a";
+        msg.textContent = "Todavía no está habilitada. Tu docente la habilita cuando termina la clase; probá de nuevo más tarde.";
+      }
+    });
+  };
+
+  // Control del docente: habilita (o vuelve a ocultar) la devolución para TODO el curso de una vez.
+  window.habilitarDevolucion = function(){
+    var codigo = prompt("Código docente para la devolución:");
+    if(codigo === null) return;
+    codigo = String(codigo).trim();
+    if(!codigo) return;
+    var habilitar = confirm("¿HABILITAR la devolución para todos los que rindieron \"" + TEMA + "\"?\n\nAceptar = habilitar · Cancelar = volver a ocultarla");
+    jsonpDevolucion({ accion: "habilitar_devolucion", tema: TEMA, clave: codigo, valor: habilitar ? "1" : "0" }, function(resp){
+      if(resp && resp.ok){
+        alert(resp.habilitada
+          ? "Devolución HABILITADA. Los alumnos la ven en su pantalla en menos de un minuto (o al volver a abrir el examen)."
+          : "Devolución OCULTA otra vez.");
+      } else if(resp && resp.error === "clave incorrecta"){
+        alert("Código incorrecto.");
+      } else {
+        alert("No se pudo conectar con la planilla. Probá de nuevo en unos segundos.");
+      }
+    });
+  };
+
+  renderDevolucionesGuardadas();
 
 })();
 </script>
