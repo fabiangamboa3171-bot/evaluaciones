@@ -476,14 +476,18 @@
     "La información guardada en un pendrive"
   ];
   var SITUACIONES = {
-    AND: "Una prensa industrial solo baja cuando el operario presiona LOS DOS pulsadores al mismo tiempo. " +
-         "(A = 1 y B = 1: pulsador presionado. Y = 1: la prensa baja.)",
-    OR: "La luz de un pasillo se enciende cuando se presiona CUALQUIERA de los dos pulsadores, o los dos. " +
-        "(A = 1 y B = 1: pulsador presionado. Y = 1: luz encendida.)",
-    NAND: "La luz de aviso de un horno queda encendida SIEMPRE, salvo cuando sus dos puertas están cerradas al mismo tiempo. " +
-          "(A = 1 y B = 1: puerta cerrada. Y = 1: luz de aviso encendida.)",
-    NOR: "Una cinta transportadora avanza solamente cuando NINGUNO de los dos sensores de seguridad detecta a una persona. " +
-         "(A = 1 y B = 1: persona detectada. Y = 1: la cinta avanza.)"
+    AND: "Una prensa industrial tiene dos pulsadores de seguridad. A = 1 significa que el pulsador 1 está presionado; " +
+         "B = 1 significa que el pulsador 2 está presionado. La prensa baja (Y = 1) solamente si los dos pulsadores " +
+         "están presionados al mismo tiempo; en cualquier otro caso no baja (Y = 0).",
+    OR: "La luz de un pasillo tiene dos pulsadores, uno en cada punta. A = 1 significa que el pulsador 1 está presionado; " +
+        "B = 1 significa que el pulsador 2 está presionado. La luz se enciende (Y = 1) si está presionado al menos uno " +
+        "de los dos pulsadores, o los dos; solo queda apagada (Y = 0) si no se presiona ninguno.",
+    NAND: "Un horno industrial tiene dos puertas, cada una con un sensor. A = 1 significa que la puerta 1 está cerrada; " +
+          "B = 1 significa que la puerta 2 está cerrada. Una luz de aviso indica que hay alguna puerta abierta: " +
+          "se enciende (Y = 1) si al menos una puerta está abierta, y se apaga (Y = 0) solamente cuando las dos puertas están cerradas.",
+    NOR: "Una cinta transportadora tiene dos sensores de seguridad. A = 1 significa que el sensor 1 detecta a una persona; " +
+         "B = 1 significa que el sensor 2 detecta a una persona. La cinta avanza (Y = 1) solamente cuando ninguno de los dos " +
+         "sensores detecta a alguien; si cualquiera de los dos detecta a una persona, la cinta se detiene (Y = 0)."
   };
 
   function combinacionesABC(azar, forzada){
