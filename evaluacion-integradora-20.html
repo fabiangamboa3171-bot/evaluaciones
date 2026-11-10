@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluación integradora · Electrónica Industrial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#fbf3e7;
+    --cream-2:#f3e6d2;
+    --copper:#b5651d;
+    --copper-dark:#8a4a12;
+    --amber:#d98324;
+    --ink:#3a2a1a;
+    --ink-soft:#6b5643;
+    --ok:#2f7d4f;
+    --bad:#b6412c;
+    --card:#fffaf2;
+    --border:#e4cfa9;
+    --shadow: 0 10px 30px rgba(90,55,15,0.12);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #fff6e8 0%, transparent 60%),
+      radial-gradient(1000px 700px at 110% 10%, #f7e4c3 0%, transparent 55%),
+      var(--cream);
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 16px 80px;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  h1,h2,h3{font-family:'Fraunces', serif; margin:0 0 8px; color:var(--copper-dark);}
+  .card{
+    width:100%;
+    max-width:720px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    padding:32px 28px;
+  }
+  .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    font-size:12px;
+    font-weight:600;
+    color:var(--amber);
+    margin-bottom:6px;
+  }
+  p.lead{color:var(--ink-soft); line-height:1.5;}
+  label{display:block; font-weight:600; font-size:14px; margin:16px 0 6px; color:var(--ink);}
+  input[type=text]{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1.5px solid var(--border);
+    background:#fff;
+    font-size:15px;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  input[type=text]:focus{outline:2px solid var(--amber); border-color:var(--amber);}
+  .warn-box{
+    margin-top:20px;
+    padding:14px 16px;
+    background:#fdece3;
+    border:1px solid #f0c39f;
+    border-radius:12px;
+    font-size:13.5px;
+    color:#7a3a1a;
+    line-height:1.5;
+  }
+  .btn{
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+    font-weight:700;
+    font-size:15px;
+    padding:13px 22px;
+    border-radius:12px;
+    background:linear-gradient(180deg, var(--amber), var(--copper));
+    color:#fff8ee;
+    box-shadow:0 6px 16px rgba(180,90,20,.35);
+  }
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .btn.secondary{
+    background:#fff;
+    color:var(--copper-dark);
+    border:1.5px solid var(--border);
+    box-shadow:none;
+  }
+  .btn-row{display:flex; gap:10px; margin-top:22px; justify-content:flex-end;}
+  #app{width:100%; max-width:760px; display:flex; flex-direction:column; align-items:center; gap:18px;}
+
+  /* progress bar de "bandas de resistor" */
+  .progress-wrap{width:100%; max-width:720px;}
+  .progress-track{
+    display:flex;
+    gap:3px;
+    height:14px;
+    border-radius:8px;
+    overflow:hidden;
+    background:#eee1c9;
+    border:1px solid var(--border);
+  }
+  .progress-band{flex:1; background:#eee1c9; transition:background .25s ease;}
+  .progress-label{font-size:12.5px; color:var(--ink-soft); margin-top:6px; text-align:right;}
+
+  .q-meta{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;}
+  .q-index{font-size:13px; font-weight:700; color:var(--amber); text-transform:uppercase; letter-spacing:.08em;}
+  .q-points{font-size:13px; color:var(--ink-soft);}
+  .q-text{font-size:19px; font-weight:600; line-height:1.4; margin:10px 0 20px; color:var(--ink);}
+  .option{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:14px 16px;
+    border:1.5px solid var(--border);
+    border-radius:12px;
+    margin-bottom:10px;
+    cursor:pointer;
+    background:#fff;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .option:hover{border-color:var(--amber);}
+  .option.selected{border-color:var(--copper); background:#fdf1de;}
+  .option input{accent-color:var(--copper); margin-top:3px;}
+  .option-text{font-size:15px; line-height:1.4;}
+
+  #lock-overlay{
+    position:fixed; inset:0; background:rgba(58,42,26,.92);
+    display:none; align-items:center; justify-content:center; z-index:999; padding:20px;
+  }
+  #lock-overlay .card{max-width:480px; text-align:center; border-color:var(--bad);}
+  #lock-overlay h2{color:var(--bad);}
+
+  .score-hero{
+    text-align:center;
+    padding:18px 0 6px;
+  }
+  .score-num{font-family:'Fraunces', serif; font-size:64px; font-weight:700; color:var(--copper-dark); line-height:1;}
+  .score-sub{color:var(--ink-soft); margin-top:4px;}
+  .status-pill{
+    display:inline-block; margin-top:10px; padding:6px 14px; border-radius:999px;
+    font-size:12.5px; font-weight:700; letter-spacing:.03em;
+  }
+  .status-ok{background:#e2f3e8; color:var(--ok);}
+  .status-bad{background:#fbe4de; color:var(--bad);}
+
+  table.review{width:100%; border-collapse:collapse; margin-top:20px; font-size:13.5px;}
+  table.review th, table.review td{text-align:left; padding:8px 8px; border-bottom:1px solid var(--border); vertical-align:top;}
+  table.review th{color:var(--ink-soft); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em;}
+  .ans-ok{color:var(--ok); font-weight:600;}
+  .ans-bad{color:var(--bad); font-weight:600;}
+
+  textarea#backup-text{
+    width:100%; min-height:110px; margin-top:14px; padding:10px 12px;
+    border-radius:10px; border:1.5px solid var(--border); font-family:'IBM Plex Sans',monospace; font-size:12.5px;
+    color:var(--ink-soft); resize:vertical;
+  }
+
+  #q-options > input[type=text]{margin-bottom:12px;}
+  #q-options > label{display:block; margin-top:6px;}
+  footer{
+    margin-top:28px; text-align:center; font-size:12px; color:#b79f7d;
+  }
+  footer a{color:#b79f7d; text-decoration:underline; cursor:pointer;}
+  #teacher-tag{
+    display:none; margin-top:14px; padding:8px 12px; border-radius:10px;
+    background:#fdf1de; border:1px dashed var(--copper); color:var(--copper-dark);
+    font-size:12.5px; font-weight:600; text-align:center;
+  }
+  /* ejercicios por partes (Electrónica Digital) */
+  .q-extra{margin:4px 0 16px;}
+  .part-label{font-weight:600; font-size:15px; margin:14px 0 6px; color:var(--ink); line-height:1.4;}
+  .seg{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px;}
+  .seg button{appearance:none; cursor:pointer; font-family:inherit; font-size:15px; font-weight:700;
+    min-width:64px; padding:10px 16px; border-radius:10px; border:1.5px solid var(--border);
+    background:#fff; color:var(--ink);}
+  .seg button.on{background:var(--copper); border-color:var(--copper-dark); color:#fff8ee;}
+  table.tt{border-collapse:collapse; font-size:16px; margin:4px 0;}
+  table.tt th, table.tt td{border:1.5px solid var(--border); padding:6px 18px; text-align:center;}
+  table.tt th{background:var(--cream-2); color:var(--copper-dark);}
+  .fila-expl td.expl{font-size:12.5px; color:var(--ink-soft); background:#fbf6ee; border-bottom:1px solid var(--border); padding:6px 8px 10px;}
+  #devol-guardadas{width:100%; max-width:720px; margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div id="devol-guardadas" style="display:none;"></div>
+
+  <!-- PANTALLA DE BLOQUEO POR REINTENTO (alumno que ya rindió en este dispositivo) -->
+  <div class="card" id="already-done-screen" style="display:none;">
+    <div class="eyebrow">Evaluación · Electrónica Industrial</div>
+    <h1>Ya registramos tu entrega</h1>
+    <p class="lead">Este dispositivo/navegador ya registró una entrega de esta evaluación (normal o por salir de
+    pantalla). No se puede volver a rendir desde aquí. Si creés que esto es un error, avisale a tu docente
+    directamente — no recargues ni intentes de nuevo por tu cuenta.</p>
+  </div>
+
+  <!-- PANTALLA DE LOGIN -->
+  <div class="card" id="login-screen">
+    <div class="eyebrow">Evaluación · Electrónica Industrial</div>
+    <h1>Evaluación integradora</h1>
+    <p class="lead">20 consignas · 0,5 punto cada una (se suman puntos parciales) · 10 puntos = nota 10. Respondé escribiendo con tus palabras o con el número pedido. El orden de las consignas es distinto para cada alumno.</p>
+
+    <div id="codigo-step">
+      <label for="in-codigo">Código de alumno</label>
+      <input type="text" id="in-codigo" autocomplete="off" placeholder="Ingresá tu código" inputmode="numeric">
+      <div class="btn-row">
+        <button class="btn" id="btn-validar" onclick="validarCodigo()">Validar código</button>
+      </div>
+      <div id="codigo-msg" style="display:none; margin-top:12px; font-size:13.5px; font-weight:600;"></div>
+    </div>
+
+    <div id="manual-step" style="display:none;">
+      <div class="warn-box" style="background:#fdece3; border-color:#f0c39f; color:#7a3a1a;">
+        Si tu conexión sigue sin validar el código, podés completar tus datos y continuar igual —
+        tu docente va a confirmar el código más tarde con la planilla.
+      </div>
+      <label for="in-apellido-manual">Apellido</label>
+      <input type="text" id="in-apellido-manual" autocomplete="off" placeholder="Tu apellido">
+      <label for="in-nombre-manual">Nombre</label>
+      <input type="text" id="in-nombre-manual" autocomplete="off" placeholder="Tu nombre">
+      <label for="in-curso-manual">Curso</label>
+      <input type="text" id="in-curso-manual" autocomplete="off" placeholder="Ej: 5° 10°">
+      <div class="btn-row">
+        <button class="btn" id="btn-continuar-manual" onclick="continuarSinValidar()">Continuar sin validar</button>
+      </div>
+    </div>
+
+    <div id="confirm-step" style="display:none;">
+      <div class="warn-box" id="confirm-box" style="background:#e2f3e8; border-color:#bfe3cc; color:#215c37;"></div>
+      <div class="warn-box">
+        <strong>Importante:</strong> una vez que empieces, no podés salir ni minimizar esta pestaña.
+        Si cambiás de pestaña, minimizás la ventana o cerrás el navegador, la evaluación se cierra
+        automáticamente y se entrega con las respuestas marcadas hasta ese momento.
+      </div>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="cambiarCodigo()">No soy yo</button>
+        <button class="btn" id="btn-start" onclick="startQuiz()">Comenzar evaluación</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA DEL EXAMEN -->
+  <div id="quiz-screen" style="display:none; width:100%; max-width:720px;">
+    <div class="progress-wrap">
+      <div class="progress-track" id="progress-track"></div>
+      <div class="progress-label" id="progress-label">Pregunta 1 de 20</div>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <div class="q-meta">
+        <span class="q-index" id="q-index">Pregunta 1</span>
+        <span class="q-points">1 punto</span>
+      </div>
+      <div class="q-text" id="q-text"></div>
+      <div id="q-options"></div>
+      <div class="btn-row">
+        <button class="btn" id="btn-next" onclick="nextQuestion()" disabled>Siguiente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA DE RESULTADO -->
+  <div id="result-screen" style="display:none; width:100%; max-width:720px;">
+    <div class="card">
+      <div class="score-hero">
+        <div class="eyebrow">Resultado</div>
+        <div class="score-num" id="score-nota">-</div>
+        <div class="score-sub" id="score-detalle">- / 10 puntos</div>
+        <div id="status-pill-wrap"></div>
+      </div>
+      <div class="warn-box" id="devolucion-box" style="display:none; margin-top:16px;"></div>
+      <table class="review" id="review-table">
+        <thead>
+          <tr><th>#</th><th>Pregunta</th><th>Tu respuesta</th><th>Correcta</th></tr>
+        </thead>
+        <tbody id="review-body"></tbody>
+      </table>
+      <label for="backup-text" style="margin-top:18px;">Texto de respaldo (podés copiarlo como comprobante)</label>
+      <textarea id="backup-text" readonly></textarea>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="copyBackupText()">Copiar comprobante</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Sistema de evaluación interactiva · Electrónica Industrial
+    <div><a onclick="openTeacherPanel()">Acceso docente</a> · <a onclick="habilitarReingreso()">Reingreso autorizado</a> · <a onclick="habilitarDevolucion()">Habilitar devolución</a></div>
+    <div id="teacher-tag">Modo docente activo: sin bloqueo por salida ni envío a la planilla.</div>
+  </footer>
+
+</div>
+
+<!-- OVERLAY DE BLOQUEO POR SALIDA -->
+<div id="lock-overlay">
+  <div class="card">
+    <h2>Evaluación cerrada</h2>
+    <p class="lead">Detectamos que saliste de esta pantalla o cambiaste de pestaña. La evaluación se cerró
+    automáticamente y se envió con las respuestas marcadas hasta ese momento.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ======= CONFIGURACIÓN =======
+  var WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyYQwVQh5Z1zPKgCT9qrHy4T1xmPXZUxsUPPq0BjGnRCCKWPvJeuwhS0v4nRe_PKqxa/exec";
+  var TEMA = "Evaluación integradora 5° 8ª";
+  var HOJA_DESTINO = "Integradora";
+  var STORAGE_KEY = "pendiente_integradora_5to8_v1";
+  var COMPLETED_KEY = "completado_integradora_5to8_v1";
+  var TEACHER_PASSWORD = "integradora2026";
+  var MATERIA = "Electrónica Industrial";
+
+  // Bandas estilo código de colores de resistencias (0-9), se repiten cada 10 preguntas
+  var RESISTOR_COLORS = ["#000000","#8a4a12","#d9362e","#f2871f","#f2c12e","#3f9142","#2f6fd9","#7c3aed","#8a8a8a","#f5efe3"];
+
+  // Tipos: "mc" (opción múltiple, correct = índice) y "fill" (completar; cada espacio
+  // tiene una función check(texto) -> true/false y un texto "show" con la respuesta esperada).
+  // Los puntos de cada pregunta se reparten en partes iguales entre sus espacios.
+  function norm(s){
+    return String(s == null ? "" : s).toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[.,;:!?¡¿"'()]/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function parseNum(s){
+    var m = String(s == null ? "" : s).replace(",", ".").match(/-?\d+(\.\d+)?/);
+    return m ? parseFloat(m[0]) : null;
+  }
+  function checkNumero(valor, palabra){
+    return function(t){
+      var n = norm(t);
+      if(palabra && new RegExp("^" + palabra + "( diodos?)?$").test(n)) return true;
+      var x = parseNum(t);
+      return x !== null && Math.abs(x - valor) < 0.01;
+    };
+  }
+
+  // ======= EVALUACIÓN INTEGRADORA 5° 8ª — consignas abiertas (sin opción múltiple) =======
+  // 20 consignas de 0,5 punto (puntaje parcial por partes). Mismos valores para todos;
+  // el ORDEN de las consignas es distinto para cada alumno (semilla = código o nombre).
+  function hashTexto(s){
+    var h = 2166136261 >>> 0;
+    for(var i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h >>> 0;
+  }
+  function crearAzar(semilla){
+    var a = hashTexto(String(semilla));
+    function r(){
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+    return {
+      mezclar: function(arr){
+        var x = arr.slice();
+        for(var i=x.length-1;i>0;i--){ var j = Math.floor(r() * (i+1)); var t = x[i]; x[i] = x[j]; x[j] = t; }
+        return x;
+      }
+    };
+  }
+  function normNombre(s){
+    return String(s == null ? "" : s).toLowerCase().normalize("NFD")
+      .replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  }
+
+  // --- Corrección flexible ---
+  function nt(s){
+    return " " + String(s == null ? "" : s).toLowerCase().normalize("NFD")
+      .replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim() + " ";
+  }
+  function numDe(s){
+    var m = String(s == null ? "" : s).replace(/(\d),(\d)/g, "$1.$2").match(/-?\d+(\.\d+)?/);
+    return m ? parseFloat(m[0]) : null;
+  }
+  // Número con tolerancia relativa (tol = 0.02 → ±2 %); palabras = escrituras aceptadas ("cuatro")
+  function cNum(valor, tol, palabras){
+    return function(t){
+      var n = nt(t);
+      if(palabras){ for(var k=0;k<palabras.length;k++){ if(n.indexOf(" " + palabras[k] + " ") >= 0) return true; } }
+      var x = numDe(t);
+      if(x === null) return false;
+      var margen = Math.max(Math.abs(valor) * (tol || 0), 0.001);
+      return Math.abs(x - valor) <= margen;
+    };
+  }
+  // Acepta si la respuesta contiene alguna de las raíces (sin tildes ni mayúsculas) y ninguna prohibida
+  function cRaiz(raices, prohibidas){
+    return function(t){
+      var n = nt(t);
+      if(prohibidas){ for(var p=0;p<prohibidas.length;p++){ if(n.indexOf(prohibidas[p]) >= 0) return false; } }
+      for(var k=0;k<raices.length;k++){ if(n.indexOf(raices[k]) >= 0) return true; }
+      return false;
+    };
+  }
+  // Letra sola (N / P), con o sin la palabra "tipo"
+  function cLetra(letra){
+    return function(t){
+      var n = nt(t).replace(/ tipo /g, " ").replace(/ material /g, " ").replace(/ semiconductor /g, " ");
+      return n.trim() === letra;
+    };
+  }
+  // Orden de etapas: las cuatro palabras tienen que aparecer en ese orden
+  function cOrden(raices){
+    return function(t){
+      var n = nt(t), ult = -1;
+      for(var k=0;k<raices.length;k++){
+        var pos = n.indexOf(raices[k]);
+        if(pos < 0 || pos < ult) return false;
+        ult = pos;
+      }
+      return true;
+    };
+  }
+  function parte(label, check, show, peso, numerico){
+    return {label:label, kind:"texto", numerico:!!numerico, placeholder: numerico ? "Escribí el número" : "Escribí tu respuesta",
+            check:check, show:show, peso:peso};
+  }
+
+  var BANCO = [
+    {id:1, type:"parts", q:"Corriente alterna. Completá con los valores de la red eléctrica domiciliaria de Argentina.",
+     parts:[parte("Tensión (V eficaces):", cNum(220, 0), "220 V", 0.25, true),
+            parte("Frecuencia (Hz):", cNum(50, 0), "50 Hz", 0.25, true)],
+     expl:"En Argentina la red domiciliaria es de 220 V eficaces y 50 Hz (50 ciclos por segundo)."},
+
+    {id:2, type:"parts", q:"Corriente alterna. Una tensión alterna tiene un valor pico de 311 V. Calculá su valor eficaz (Vef = Vp ÷ √2).",
+     parts:[parte("Valor eficaz (V):", cNum(219.9, 0.02), "220 V", 0.5, true)],
+     expl:"Vef = Vp ÷ √2 = 311 ÷ 1,414 ≈ 220 V. Por eso decimos que la red es de 220 V: es su valor eficaz, aunque el pico llegue a 311 V."},
+
+    {id:3, type:"parts", q:"Corriente alterna. En la pantalla del osciloscopio, una señal tarda 20 ms en completar un ciclo. ¿Cuál es su frecuencia?",
+     parts:[parte("Frecuencia (Hz):", cNum(50, 0.01), "50 Hz", 0.5, true)],
+     expl:"La frecuencia es la inversa del período: f = 1 ÷ T = 1 ÷ 0,020 s = 50 Hz."},
+
+    {id:4, type:"parts", q:"Semiconductores. Si a un semiconductor puro se le agregan impurezas (dopaje)…",
+     parts:[parte("…con átomos de 5 electrones de valencia, se obtiene material tipo:", cLetra("n"), "N", 0.25),
+            parte("…con átomos de 3 electrones de valencia, se obtiene material tipo:", cLetra("p"), "P", 0.25)],
+     expl:"Con impurezas de 5 electrones de valencia sobra un electrón libre: material tipo N (negativo). Con impurezas de 3 electrones falta uno y queda un hueco: material tipo P (positivo)."},
+
+    {id:5, type:"parts", q:"Diodo. Completá: un diodo conduce cuando el ánodo es más ____ que el cátodo; esa forma de conectarlo se llama polarización ____.",
+     parts:[parte("El ánodo tiene que ser más:", cRaiz(["posit"], ["negat"]), "positivo", 0.25),
+            parte("Polarización:", cRaiz(["direct"], ["invers"]), "directa", 0.25)],
+     expl:"El diodo conduce en polarización directa: ánodo más positivo que el cátodo. Si se invierte (polarización inversa), no conduce."},
+
+    {id:6, type:"parts", q:"Medición de diodos. Mediste dos diodos con el multímetro en modo diodo. Escribí si cada uno está BUENO, EN CORTO o ABIERTO.",
+     parts:[parte("Diodo 1: marca 0,62 V en un sentido y \"OL\" al invertir las puntas →", cRaiz(["buen", "bien", "ok", "funciona", "sano"], ["no funciona", "no anda", "malo", "no esta"]), "bueno", 0.25),
+            parte("Diodo 2: marca 0,00 V en los dos sentidos →", cRaiz(["corto"]), "en corto", 0.25)],
+     expl:"Un diodo bueno conduce en un solo sentido: marca la caída (≈0,6 V en silicio) en directa y \"OL\" en inversa. Si marca 0 V en ambos sentidos está en cortocircuito; si marca \"OL\" en ambos sentidos está abierto."},
+
+    {id:7, type:"parts", q:"Rectificadores. ¿Cuántos diodos utiliza un rectificador de onda completa tipo puente?",
+     parts:[parte("Cantidad de diodos:", cNum(4, 0, ["cuatro"]), "4", 0.5, true)],
+     expl:"El puente rectificador usa 4 diodos: en cada semiciclo conducen 2 de ellos y la corriente por la carga circula siempre en el mismo sentido."},
+
+    {id:8, type:"parts", q:"Rectificadores. Con la red de 50 Hz, ¿cuál es la frecuencia del rizado en cada caso?",
+     parts:[parte("Rectificador de media onda (Hz):", cNum(50, 0), "50 Hz", 0.25, true),
+            parte("Rectificador de onda completa (Hz):", cNum(100, 0), "100 Hz", 0.25, true)],
+     expl:"La media onda aprovecha un solo semiciclo: el rizado tiene la misma frecuencia que la red (50 Hz). La onda completa aprovecha los dos semiciclos: el rizado tiene el doble (100 Hz)."},
+
+    {id:9, type:"parts", q:"Rectificadores. El secundario de un transformador entrega 12 V eficaces y alimenta un puente rectificador.",
+     parts:[parte("a) Tensión pico del secundario, Vp = Vef × √2 (V):", cNum(16.97, 0.03), "≈ 17 V", 0.25, true),
+            parte("b) Tensión pico sobre la carga, restando 1,4 V de los dos diodos que conducen (V):", cNum(15.57, 0.03), "≈ 15,6 V", 0.25, true)],
+     expl:"Vp = 12 × 1,414 ≈ 17 V. En el puente conducen 2 diodos a la vez y cada uno cae ≈0,7 V: 17 − 1,4 ≈ 15,6 V sobre la carga."},
+
+    {id:10, type:"parts", q:"Fuentes lineales. Escribí en orden las etapas de una fuente lineal, desde la red hasta la carga: regulador, transformador, filtro, rectificador.",
+     parts:[parte("Orden (separá con comas):", cOrden(["transfor", "rectific", "filtr", "regula"]), "transformador → rectificador → filtro → regulador", 0.5)],
+     expl:"Primero el transformador baja la tensión; el rectificador la convierte en continua pulsante; el filtro (capacitor) la alisa y el regulador la mantiene fija."},
+
+    {id:11, type:"parts", q:"Fuentes lineales. Una fuente lineal enciende, pero la tensión de salida tiene mucho rizado (zumbido, \"ondula\" en el osciloscopio). ¿Qué etapa es la más probable que esté fallando: transformador, rectificador, filtro o regulador?",
+     parts:[parte("Etapa que falla:", cRaiz(["filtr", "capacit", "condensad"]), "el filtro (capacitor)", 0.5)],
+     expl:"El encargado de alisar el rizado es el filtro: un capacitor electrolítico seco, con poca capacidad o desconectado deja pasar el rizado a la salida."},
+
+    {id:12, type:"parts", q:"Fuentes. Hay que alimentar un cargador de celular que tiene que ser chico y liviano.",
+     parts:[parte("a) ¿Usarías una fuente LINEAL o CONMUTADA?", cRaiz(["conmut", "switching", "smps"], ["lineal"]), "conmutada", 0.25),
+            parte("b) Escribí la ventaja principal que justifica tu elección:", cRaiz(["chic", "pequen", "livian", "tamano", "peso", "compact", "eficien", "rendimiento", "calienta menos", "menos calor", "disipa menos", "menos perdida", "ahorr", "consume menos", "menor consumo", "menos energia"]), "más chica y liviana / más eficiente (calienta menos)", 0.25)],
+     expl:"La fuente conmutada trabaja a alta frecuencia: usa transformadores e inductores mucho más chicos y livianos y tiene mejor rendimiento (calienta menos). Por eso se usa en los cargadores de celular."},
+
+    {id:13, type:"parts", q:"Fuentes conmutadas. Completá: en una fuente conmutada, el transistor trabaja como ____, a una frecuencia mucho ____ que la de la red. Eso permite usar transformadores e inductores más ____.",
+     parts:[parte("El transistor trabaja como:", cRaiz(["interrupt", "llave", "conmut", "switch", "on off", "encend", "corte y saturacion", "apaga"]), "interruptor (llave, conmutador, switch)", 1/6),
+            parte("Frecuencia mucho:", cRaiz(["mayor", "alta", "superior", "elevad", "grande", "rapid"], ["menor", "baja"]), "mayor", 1/6),
+            parte("Transformadores e inductores más:", cRaiz(["chic", "pequen", "livian", "reducid", "menor", "compact"]), "chicos (pequeños, livianos)", 1/6)],
+     expl:"En la fuente conmutada el transistor funciona como una llave que se prende y apaga miles de veces por segundo (frecuencia mucho mayor que 50 Hz). A mayor frecuencia, los transformadores e inductores pueden ser mucho más chicos y livianos."},
+
+    {id:14, type:"parts", q:"Fuentes conmutadas. El control PWM regula la salida ajustando el ciclo de trabajo (cuánto tiempo está encendido el transistor en cada ciclo).",
+     parts:[parte("a) La carga pide más corriente y la tensión de salida empieza a bajar. ¿El ciclo de trabajo debe AUMENTAR o DISMINUIR?", cRaiz(["aument", "subi", "mayor", "incremen", "agrand"], ["disminu", "baj", "reduc"]), "aumentar", 0.25),
+            parte("b) Se desconecta la carga y la tensión de salida empieza a subir. ¿El ciclo de trabajo debe AUMENTAR o DISMINUIR?", cRaiz(["disminu", "baj", "reduc", "menor", "achic"], ["aument", "subi", "incremen"]), "disminuir", 0.25)],
+     expl:"Con un ciclo de trabajo mayor, el transistor entrega energía durante más tiempo y la salida sube; con uno menor, la salida baja. El lazo de realimentación lo ajusta solo para mantener la tensión constante."},
+
+    {id:15, type:"parts", q:"Sistemas trifásicos. En un sistema trifásico equilibrado, ¿cuántos grados están desfasadas las fases entre sí?",
+     parts:[parte("Desfasaje (grados):", cNum(120, 0, ["ciento veinte"]), "120°", 0.5, true)],
+     expl:"Las tres fases (R, S, T) están desfasadas 120° entre sí: 360° ÷ 3 = 120°."},
+
+    {id:16, type:"parts", q:"Sistemas trifásicos. La tensión de fase es 220 V. Calculá la tensión de línea (VL = √3 × Vf).",
+     parts:[parte("Tensión de línea (V):", cNum(381, 0.02), "380 V", 0.5, true)],
+     expl:"VL = √3 × Vf = 1,732 × 220 ≈ 380 V. Es la tensión entre dos fases; la de fase (220 V) se mide entre una fase y el neutro."},
+
+    {id:17, type:"parts", q:"Rectificador trifásico. Un rectificador trifásico de onda completa (puente) trabaja con la red de 50 Hz.",
+     parts:[parte("a) ¿Cuántos diodos usa?", cNum(6, 0, ["seis"]), "6", 0.25, true),
+            parte("b) ¿Cuál es la frecuencia del rizado (Hz)?", cNum(300, 0), "300 Hz", 0.25, true)],
+     expl:"El puente trifásico usa 6 diodos (2 por fase) y produce 6 pulsos por ciclo: 6 × 50 Hz = 300 Hz de rizado. Por eso la salida es mucho más lisa que la de un rectificador monofásico."},
+
+    {id:18, type:"parts", q:"Tiristores. Completá: los tres terminales de un SCR son ánodo, cátodo y ____.",
+     parts:[parte("Tercer terminal:", cRaiz(["compuert", "gate", "puerta", "disparo"]), "compuerta (gate)", 0.5)],
+     expl:"El SCR tiene ánodo, cátodo y compuerta (gate): un pulso de corriente en la compuerta lo dispara."},
+
+    {id:19, type:"parts", q:"Tiristores. Una vez disparado, el SCR sigue conduciendo aunque se quite la señal de compuerta. Completá: para que se apague, la corriente de ánodo tiene que bajar por debajo de la corriente de ____.",
+     parts:[parte("Corriente de:", cRaiz(["manten", "retenc", "holding", "sosten"]), "mantenimiento (retención, holding)", 0.5)],
+     expl:"El SCR se apaga cuando la corriente de ánodo cae por debajo de la corriente de mantenimiento (o de retención, IH). En corriente alterna esto pasa solo en cada cruce por cero."},
+
+    {id:20, type:"parts", q:"Diseño. Tenés que armar el control de velocidad de un ventilador de 220 V de corriente alterna.",
+     parts:[parte("a) Semiconductor de potencia que usarías:", cRaiz(["triac"]), "TRIAC", 1/6),
+            parte("b) Componente que usarías para dispararlo:", cRaiz(["diac"]), "DIAC", 1/6),
+            parte("c) Para que el motor gire MÁS LENTO, ¿hay que ADELANTAR o RETRASAR el ángulo de disparo?", cRaiz(["retras", "atras", "demor", "tarde"], ["adelant"]), "retrasar", 1/6)],
+     expl:"El TRIAC conduce en los dos semiciclos, por eso sirve para corriente alterna; el DIAC genera el pulso de disparo simétrico. Si se retrasa el ángulo de disparo, el TRIAC conduce una parte menor de cada semiciclo, el motor recibe menos potencia y gira más lento (así funciona un dimmer)."}
+  ];
+
+  function mezclarOrden(semilla){
+    return crearAzar(semilla).mezclar(BANCO);
+  }
+
+
+  function renderPartes(qData, idx, wrap){
+    if(!state.answers[idx]){ state.answers[idx] = new Array(qData.parts.length).fill(""); }
+    if(qData.html){
+      var extra = document.createElement("div");
+      extra.className = "q-extra";
+      extra.innerHTML = qData.html;
+      wrap.appendChild(extra);
+    }
+    qData.parts.forEach(function(p, pi){
+      var lab = document.createElement("div");
+      lab.className = "part-label";
+      lab.textContent = p.label;
+      wrap.appendChild(lab);
+      if(p.kind === "botones"){
+        var seg = document.createElement("div");
+        seg.className = "seg";
+        p.opciones.forEach(function(op){
+          var b = document.createElement("button");
+          b.type = "button";
+          b.textContent = op;
+          if(state.answers[idx][pi] === op) b.className = "on";
+          b.addEventListener("click", function(){
+            state.answers[idx][pi] = op;
+            Array.prototype.forEach.call(seg.children, function(c){ c.className = (c === b) ? "on" : ""; });
+            document.getElementById("btn-next").disabled = !isAnswered(idx);
+          });
+          seg.appendChild(b);
+        });
+        wrap.appendChild(seg);
+      } else {
+        var inp = document.createElement("input");
+        inp.type = "text";
+        inp.autocomplete = "off";
+        inp.setAttribute("autocapitalize", "off");
+        inp.setAttribute("spellcheck", "false");
+        if(p.numerico) inp.setAttribute("inputmode", "decimal");
+        inp.placeholder = p.placeholder || "Escribí tu respuesta";
+        inp.value = state.answers[idx][pi] || "";
+        inp.addEventListener("input", function(){
+          state.answers[idx][pi] = inp.value;
+          document.getElementById("btn-next").disabled = !isAnswered(idx);
+        });
+        wrap.appendChild(inp);
+      }
+    });
+  }
+
+  var questions = BANCO.slice();
+
+  var PUNTOS_POR_PREGUNTA = 0.5;
+
+  var state = {
+    apellido:"", nombre:"", curso:"", codigo:"", especial:false,
+    current:0,
+    answers:new Array(questions.length).fill(null),
+    started:false,
+    finished:false,
+    modoDocente:false
+  };
+
+  var alumnoValidado = null;
+
+  // ======= VALIDACIÓN DE CÓDIGO (contra la planilla "Codigos", vía JSONP) =======
+  window.validarCodigo = function(){
+    var codigo = document.getElementById("in-codigo").value.trim();
+    if(!codigo){ alert("Ingresá tu código antes de validar."); return; }
+
+    var msg = document.getElementById("codigo-msg");
+    var btn = document.getElementById("btn-validar");
+    msg.style.display = "block";
+    msg.style.color = "var(--ink-soft)";
+    msg.textContent = "Validando código...";
+    btn.disabled = true;
+
+    var MAX_INTENTOS = 3;
+    var TIMEOUT_MS = 20000;
+
+    function intentar(numIntento){
+      msg.style.color = "var(--ink-soft)";
+      msg.textContent = numIntento > 1
+        ? "Validando código... (intento " + numIntento + " de " + MAX_INTENTOS + ")"
+        : "Validando código...";
+
+      var cbName = "cbValidarCodigo_" + Date.now() + "_" + numIntento;
+      var terminado = false;
+
+      function limpiar(){
+        var s = document.getElementById("jsonp-validar-codigo");
+        if(s && s.parentNode) s.parentNode.removeChild(s);
+        try{ window[cbName] = function(){}; }catch(e){}
+      }
+
+      function reintentarOFallar(){
+        limpiar();
+        if(numIntento < MAX_INTENTOS){
+          setTimeout(function(){ intentar(numIntento + 1); }, 900 * numIntento);
+          return;
+        }
+        btn.disabled = false;
+        msg.style.color = "var(--bad)";
+        msg.textContent = "No se pudo conectar para validar el código después de " + MAX_INTENTOS + " intentos. Revisá tu conexión a internet (o probá con datos móviles / otro WiFi), o completá tus datos abajo para continuar sin validar.";
+        document.getElementById("manual-step").style.display = "block";
+      }
+
+      var timeoutId = setTimeout(function(){
+        if(terminado) return;
+        terminado = true;
+        reintentarOFallar();
+      }, TIMEOUT_MS);
+
+      window[cbName] = function(resp){
+        if(terminado) return;
+        terminado = true;
+        clearTimeout(timeoutId);
+        limpiar();
+        btn.disabled = false;
+        if(!resp || !resp.valido){
+          msg.style.color = "var(--bad)";
+          msg.textContent = "Código no encontrado. Revisalo bien antes de volver a intentar, o avisale a tu docente.";
+          return;
+        }
+        if(resp.usado && !resp.especial && !reingresoAutorizado){
+          msg.style.color = "var(--bad)";
+          msg.textContent = "Este código ya fue usado para entregar esta evaluación. Si creés que es un error, avisale a tu docente.";
+          return;
+        }
+        msg.style.display = "none";
+        alumnoValidado = resp;
+        alumnoValidado.codigo = codigo;
+        document.getElementById("codigo-step").style.display = "none";
+        document.getElementById("confirm-step").style.display = "block";
+        document.getElementById("confirm-box").textContent =
+          "Alumno/a: " + resp.apellido + ", " + resp.nombre + " — Curso: " + resp.curso + ". Si no sos vos, tocá \"No soy yo\".";
+      };
+
+      var script = document.createElement("script");
+      script.id = "jsonp-validar-codigo";
+      script.src = WEBHOOK_URL + "?accion=validar_codigo&codigo=" + encodeURIComponent(codigo) + "&tema=" + encodeURIComponent(TEMA) + "&callback=" + cbName;
+      script.onerror = function(){
+        if(terminado) return;
+        terminado = true;
+        clearTimeout(timeoutId);
+        reintentarOFallar();
+      };
+      document.body.appendChild(script);
+    }
+
+    intentar(1);
+  };
+
+  window.cambiarCodigo = function(){
+    alumnoValidado = null;
+    document.getElementById("in-codigo").value = "";
+    document.getElementById("codigo-msg").style.display = "none";
+    document.getElementById("confirm-step").style.display = "none";
+    document.getElementById("codigo-step").style.display = "block";
+    document.getElementById("manual-step").style.display = "none";
+    document.getElementById("in-apellido-manual").value = "";
+    document.getElementById("in-nombre-manual").value = "";
+    document.getElementById("in-curso-manual").value = "";
+    var cbReset = document.getElementById("confirm-box");
+    cbReset.style.background = "#e2f3e8"; cbReset.style.borderColor = "#bfe3cc"; cbReset.style.color = "#215c37";
+  };
+
+  // ======= CONTINUAR SIN VALIDAR (respaldo si falla la conexión) =======
+  window.continuarSinValidar = function(){
+    var codigo = document.getElementById("in-codigo").value.trim();
+    var apellido = document.getElementById("in-apellido-manual").value.trim();
+    var nombre = document.getElementById("in-nombre-manual").value.trim();
+    var curso = document.getElementById("in-curso-manual").value.trim();
+    if(!apellido || !nombre || !curso){
+      alert("Completá apellido, nombre y curso para continuar.");
+      return;
+    }
+    alumnoValidado = {
+      apellido: apellido,
+      nombre: nombre,
+      curso: curso,
+      especial: false,
+      usado: false,
+      validado: false
+    };
+    alumnoValidado.codigo = codigo || "(sin código)";
+    document.getElementById("codigo-msg").style.display = "none";
+    document.getElementById("manual-step").style.display = "none";
+    document.getElementById("codigo-step").style.display = "none";
+    document.getElementById("confirm-step").style.display = "block";
+    var cb = document.getElementById("confirm-box");
+    cb.style.background = "#fdf1de"; cb.style.borderColor = "#e4cfa9"; cb.style.color = "#7a3a1a";
+    cb.textContent =
+      "Alumno/a: " + apellido + ", " + nombre + " — Curso: " + curso + " (código no verificado por conexión). Si no sos vos, tocá \"No soy yo\".";
+  };
+
+  // ======= LOGIN / INICIO =======
+  window.startQuiz = function(){
+    if(!alumnoValidado){ return; }
+    state.apellido = alumnoValidado.apellido;
+    state.nombre = alumnoValidado.nombre;
+    state.curso = alumnoValidado.curso;
+    state.codigo = alumnoValidado.codigo;
+    state.especial = !!alumnoValidado.especial;
+    state.validado = (alumnoValidado.validado !== false);
+    // Orden de las consignas propio de cada alumno (misma semilla = mismo orden)
+    var semilla = (state.validado && state.codigo && state.codigo !== "(sin código)")
+      ? "codigo:" + state.codigo
+      : "nombre:" + normNombre(state.apellido + " " + state.nombre);
+    questions = mezclarOrden(semilla);
+    state.answers = new Array(questions.length).fill(null);
+    state.current = 0;
+    state.started = true;
+
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("quiz-screen").style.display = "block";
+    renderDevolucionesGuardadas();
+
+    buildProgressTrack();
+    renderQuestion();
+  };
+
+  function buildProgressTrack(){
+    var track = document.getElementById("progress-track");
+    track.innerHTML = "";
+    for(var i=0;i<questions.length;i++){
+      var band = document.createElement("div");
+      band.className = "progress-band";
+      band.id = "band-"+i;
+      track.appendChild(band);
+    }
+  }
+
+  function updateProgress(){
+    for(var i=0;i<questions.length;i++){
+      var band = document.getElementById("band-"+i);
+      if(!band) continue;
+      band.style.background = (i <= state.current) ? RESISTOR_COLORS[i % 10] : "#eee1c9";
+    }
+    document.getElementById("progress-label").textContent =
+      "Pregunta " + (state.current+1) + " de " + questions.length;
+  }
+
+  // ======= RENDER DE PREGUNTAS =======
+  function isAnswered(idx){
+    var a = state.answers[idx];
+    var qd = questions[idx];
+    if(qd.type === "parts"){
+      if(!a || a.length !== qd.parts.length) return false;
+      for(var p=0;p<a.length;p++){ if(a[p] === null || a[p] === undefined || !String(a[p]).trim()) return false; }
+      return true;
+    }
+    if(qd.type === "fill"){
+      if(!a || a.length !== qd.blanks.length) return false;
+      for(var k=0;k<a.length;k++){ if(!a[k] || !String(a[k]).trim()) return false; }
+      return true;
+    }
+    return a !== null;
+  }
+
+  function renderQuestion(){
+    var idx = state.current;
+    var qData = questions[idx];
+    document.getElementById("q-index").textContent = "Pregunta " + (idx+1);
+    document.getElementById("q-text").textContent = qData.q;
+    updateProgress();
+
+    var wrap = document.getElementById("q-options");
+    wrap.innerHTML = "";
+
+    if(qData.type === "parts"){
+      renderPartes(qData, idx, wrap);
+    } else if(qData.type === "fill"){
+      if(!state.answers[idx]){ state.answers[idx] = new Array(qData.blanks.length).fill(""); }
+      qData.blanks.forEach(function(b, bi){
+        var lab = document.createElement("label");
+        lab.textContent = b.label;
+        lab.setAttribute("for", "fill-" + bi);
+        var inp = document.createElement("input");
+        inp.type = "text";
+        inp.id = "fill-" + bi;
+        inp.autocomplete = "off";
+        inp.setAttribute("autocapitalize", "off");
+        inp.setAttribute("spellcheck", "false");
+        inp.placeholder = "Escribí tu respuesta";
+        inp.value = state.answers[idx][bi] || "";
+        inp.addEventListener("input", function(){
+          state.answers[idx][bi] = inp.value;
+          document.getElementById("btn-next").disabled = !isAnswered(idx);
+        });
+        wrap.appendChild(lab);
+        wrap.appendChild(inp);
+      });
+    } else {
+      qData.options.forEach(function(optText, i){
+        var opt = document.createElement("label");
+        opt.className = "option" + (state.answers[idx]===i ? " selected" : "");
+        opt.innerHTML =
+          '<input type="radio" name="opt" ' + (state.answers[idx]===i ? "checked" : "") + '>' +
+          '<span class="option-text"></span>';
+        opt.querySelector(".option-text").textContent = optText;
+        opt.addEventListener("click", function(){ selectAnswer(i); });
+        wrap.appendChild(opt);
+      });
+    }
+
+    var btnNext = document.getElementById("btn-next");
+    btnNext.disabled = !isAnswered(idx);
+    btnNext.textContent = (idx === questions.length-1) ? "Finalizar evaluación" : "Siguiente";
+  }
+
+  window.selectAnswer = function(i){
+    state.answers[state.current] = i;
+    renderQuestion();
+  };
+
+  window.nextQuestion = function(){
+    if(!isAnswered(state.current)) return;
+    if(state.current < questions.length - 1){
+      state.current++;
+      renderQuestion();
+    } else {
+      finishQuiz(false);
+    }
+  };
+
+  // ======= PUNTAJE =======
+  // Puntos obtenidos en una pregunta (mc: 0 o 1; fill: 1/n por espacio correcto)
+  function questionScore(i){
+    var qd = questions[i], a = state.answers[i];
+    if(qd.type === "parts"){
+      if(!a) return 0;
+      var sp = 0;
+      qd.parts.forEach(function(pp, pi){
+        if(a[pi] !== null && a[pi] !== undefined && String(a[pi]).trim() && pp.check(String(a[pi]))) sp += pp.peso;
+      });
+      return Math.min(PUNTOS_POR_PREGUNTA, Math.round(sp * 1000) / 1000);
+    }
+    if(qd.type === "fill"){
+      if(!a) return 0;
+      var s = 0;
+      qd.blanks.forEach(function(b, bi){
+        if(a[bi] && b.check(a[bi])) s += PUNTOS_POR_PREGUNTA / qd.blanks.length;
+      });
+      return s;
+    }
+    return (a === qd.correct) ? PUNTOS_POR_PREGUNTA : 0;
+  }
+
+  function computeScore(){
+    var puntaje = 0;
+    for(var i=0;i<questions.length;i++){ puntaje += questionScore(i); }
+    puntaje = Math.round(puntaje * 100) / 100; // evita 2.9999999
+    var nota = puntaje; // 10 puntos = nota 10, escala directa (puede tener .5)
+    return {puntaje:puntaje, nota:nota};
+  }
+
+  // ======= ANTI-SALIDA =======
+  function lockQuiz(){
+    document.getElementById("lock-overlay").style.display = "flex";
+    document.getElementById("quiz-screen").style.display = "none";
+  }
+
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden && state.started && !state.finished && !state.modoDocente){
+      lockQuiz();
+      finishQuiz(true);
+    }
+  });
+
+  window.addEventListener("pagehide", function(){
+    if(state.started && !state.finished && !state.modoDocente){
+      lockQuiz();
+      finishQuiz(true);
+    }
+  });
+
+  // ======= ENVÍO DE RESULTADOS =======
+  // Detalle de respuestas para la planilla (columna "Detalle"): respuesta dada vs correcta por pregunta.
+  function armarDetalle(){
+    try{
+      var LETRAS = "ABCDEFGH";
+      return questions.map(function(q, i){
+        var a = state.answers[i];
+        if(q.type === "parts" || q.type === "fill"){
+          var items = (q.type === "parts") ? q.parts : q.blanks;
+          var arr = a || [];
+          var dada = items.map(function(p, pi){
+            var v = (arr[pi] !== undefined && arr[pi] !== null && String(arr[pi]).trim() !== "") ? String(arr[pi]).trim() : "-";
+            return v;
+          }).join(", ");
+          var corr = items.map(function(p){ return p.show; }).join(", ");
+          var pts = (typeof questionScore === "function") ? " [" + (Math.round(questionScore(i) * 100) / 100) + " pts]" : "";
+          return "P" + (q.id || (i + 1)) + ": " + dada + " (correcta: " + corr + ")" + pts;
+        }
+        var dadaL = (a === null || a === undefined) ? "-" : LETRAS.charAt(a);
+        return "P" + (q.id || (i + 1)) + ": " + dadaL + (a === q.correct ? " OK" : " X (correcta: " + LETRAS.charAt(q.correct) + ")");
+      }).join(" | ");
+    }catch(e){ return "error al armar detalle: " + e.message; }
+  }
+
+  function buildPayload(cerradoPorSalir){
+    var score = computeScore();
+    return {
+      apellido: state.apellido,
+      nombre: state.nombre,
+      curso: state.curso + (reingresoAutorizado ? " (reingreso autorizado)" : ""),
+      codigo: state.codigo,
+      validado: state.validado,
+      tema: TEMA,
+      hoja: HOJA_DESTINO,
+      nota: score.nota,
+      puntaje: score.puntaje,
+      cerradoPorSalir: !!cerradoPorSalir,
+      reingreso: !!reingresoAutorizado,
+      detalle: armarDetalle()
+    };
+  }
+
+  // IMPORTANTE: el valor que devuelve navigator.sendBeacon() sólo confirma que
+  // el navegador ACEPTÓ encolar el envío, no que el servidor lo haya recibido.
+  // Por eso el respaldo en localStorage NUNCA se borra automáticamente acá:
+  // se reintenta cada vez que se vuelve a abrir esta página en el mismo
+  // dispositivo/navegador, hasta que el docente confirme que la fila llegó
+  // a la planilla. Enviar de más nunca es un problema (se usa la primera fila).
+  function sendResult(payload){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); }catch(e){}
+    attemptSend(payload);
+  }
+
+  function attemptSend(payload){
+    var json = JSON.stringify(payload);
+    // Intento 1: sendBeacon — sobrevive aunque la pestaña se cierre justo después.
+    try{
+      if(navigator.sendBeacon){
+        var blob = new Blob([json], {type:"application/json"});
+        navigator.sendBeacon(WEBHOOK_URL, blob);
+      }
+    }catch(e){ /* seguimos con el intento 2 igual */ }
+    // Intento 2 (redundante, no depende del primero): fetch en modo no-cors,
+    // evita el preflight de CORS que bloquea un fetch normal contra Apps Script.
+    try{
+      fetch(WEBHOOK_URL, {
+        method:"POST",
+        mode:"no-cors",
+        headers:{"Content-Type":"text/plain;charset=UTF-8"},
+        body: json,
+        keepalive:true
+      }).catch(function(){ /* queda en localStorage para reintentar */ });
+    }catch(e){ /* queda en localStorage para reintentar */ }
+  }
+
+  function retryPendingSubmission(){
+    var pending;
+    try{ pending = localStorage.getItem(STORAGE_KEY); }catch(e){ pending = null; }
+    if(!pending) return;
+    try{
+      var payload = JSON.parse(pending);
+      attemptSend(payload);
+    }catch(e){}
+  }
+
+  // ======= FINALIZAR Y MOSTRAR RESULTADO =======
+  function finishQuiz(cerradoPorSalir){
+    if(state.finished) return;
+    state.finished = true;
+
+    // Bloqueo persistente: se marca ANTES de intentar el envío, para que recargar
+    // o reabrir esta página en el mismo dispositivo no permita un segundo intento
+    // (normal o por haber salido de pantalla) sin que el docente lo autorice.
+    // Se guarda si esta entrega fue validada en línea o no (ver checkAlreadyCompleted):
+    // una entrega SIN validar (respaldo manual) bloquea el dispositivo, porque no hubo
+    // ningún chequeo del servidor que evite reintentos; una entrega validada en línea
+    // no bloquea el dispositivo, porque el servidor ya impide reusar ese código
+    // (y así varios alumnos pueden seguir compartiendo el mismo dispositivo).
+    if(!state.modoDocente){
+      try{ localStorage.setItem(COMPLETED_KEY, JSON.stringify({validado: state.validado, ts: Date.now()})); }catch(e){}
+    }
+
+    var payload = buildPayload(cerradoPorSalir);
+    if(!state.modoDocente){
+      sendResult(payload);
+    }
+    showResult(payload, cerradoPorSalir);
+  }
+
+  function showResult(payload, cerradoPorSalir){
+    document.getElementById("quiz-screen").style.display = "none";
+    document.getElementById("lock-overlay").style.display = "none";
+    document.getElementById("result-screen").style.display = "block";
+
+    document.getElementById("score-nota").textContent = payload.nota;
+    document.getElementById("score-detalle").textContent = payload.puntaje + " / 10 puntos";
+
+    var pillWrap = document.getElementById("status-pill-wrap");
+    pillWrap.innerHTML = "";
+    var pill = document.createElement("span");
+    if(cerradoPorSalir){
+      pill.className = "status-pill status-bad";
+      pill.textContent = "Cerrado por salir de la pantalla";
+    } else {
+      pill.className = "status-pill status-ok";
+      pill.textContent = "Entregado normalmente";
+    }
+    pillWrap.appendChild(pill);
+
+    var body = document.getElementById("review-body");
+    body.innerHTML = "";
+    questions.forEach(function(qData, i){
+      var tr = document.createElement("tr");
+      var tuResp, correcta;
+      if(qData.type === "parts"){
+        var ap = state.answers[i] || [];
+        tuResp = qData.parts.map(function(pp, pi){
+          var v = (ap[pi] && String(ap[pi]).trim()) ? String(ap[pi]).trim() : "(sin responder)";
+          return qData.parts.length > 1 ? (pi+1) + ") " + v : v;
+        }).join("  ");
+        correcta = qData.parts.map(function(pp, pi){
+          return qData.parts.length > 1 ? (pi+1) + ") " + pp.show : pp.show;
+        }).join("  ");
+      } else if(qData.type === "fill"){
+        var a = state.answers[i] || [];
+        tuResp = qData.blanks.map(function(b, bi){
+          var v = (a[bi] && String(a[bi]).trim()) ? String(a[bi]).trim() : "(sin responder)";
+          return qData.blanks.length > 1 ? (bi+1) + ") " + v : v;
+        }).join("  ");
+        correcta = qData.blanks.map(function(b, bi){
+          return qData.blanks.length > 1 ? (bi+1) + ") " + b.show : b.show;
+        }).join("  ");
+      } else {
+        tuResp = state.answers[i]===null ? "(sin responder)" : qData.options[state.answers[i]];
+        correcta = qData.options[qData.correct];
+      }
+      var esCorrecta = questionScore(i) >= PUNTOS_POR_PREGUNTA - 0.0001;
+      tr.innerHTML =
+        "<td>" + (i+1) + "</td>" +
+        "<td>" + escapeHtml(qData.q) + "</td>" +
+        '<td class="' + (esCorrecta ? "ans-ok" : "ans-bad") + '">' + escapeHtml(tuResp) + "</td>" +
+        "<td>" + escapeHtml(correcta) + "</td>";
+      body.appendChild(tr);
+    });
+    prepararDevolucion(payload);
+
+    function dosDigitos(n){ return (n < 10 ? "0" : "") + n; }
+    var hoy = new Date();
+    var fecha = dosDigitos(hoy.getDate()) + "/" + dosDigitos(hoy.getMonth() + 1) + "/" + hoy.getFullYear();
+    // Formato pedido por el docente: MATERIA - TEMA - FECHA - CURSO - NOMBRE Y APELLIDO - NOTA
+    var texto =
+      MATERIA + " - " + TEMA + " - " + fecha + " - " + state.curso + " - " +
+      payload.nombre + " " + payload.apellido + " - Nota: " + String(payload.nota).replace(".", ",") + "/10";
+    document.getElementById("backup-text").value = texto;
+  }
+
+  window.copyBackupText = function(){
+    var ta = document.getElementById("backup-text");
+    ta.select();
+    ta.setSelectionRange(0, 999999);
+    try{
+      document.execCommand("copy");
+      alert("Comprobante copiado.");
+    }catch(e){
+      alert("No se pudo copiar automáticamente. Copiá el texto manualmente.");
+    }
+  };
+
+  function escapeHtml(str){
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ======= PANEL DOCENTE (modo prueba, sin envío ni bloqueo) =======
+  window.openTeacherPanel = function(){
+    var clave = prompt("Clave de acceso docente:");
+    if(clave === null) return;
+    if(clave === TEACHER_PASSWORD){
+      state.modoDocente = true;
+      document.getElementById("teacher-tag").style.display = "block";
+      // El modo docente también resetea el bloqueo local, para poder probar
+      // la evaluación las veces que haga falta desde este mismo dispositivo.
+      try{ localStorage.removeItem(COMPLETED_KEY); }catch(e){}
+      try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+      state.finished = false;
+      state.started = false;
+      state.current = 0;
+      state.answers = new Array(questions.length).fill(null);
+      alumnoValidado = null;
+      document.getElementById("codigo-step").style.display = "block";
+      document.getElementById("confirm-step").style.display = "none";
+      document.getElementById("in-codigo").value = "";
+      document.getElementById("codigo-msg").style.display = "none";
+      document.getElementById("manual-step").style.display = "none";
+      document.getElementById("already-done-screen").style.display = "none";
+      document.getElementById("result-screen").style.display = "none";
+      document.getElementById("quiz-screen").style.display = "none";
+      document.getElementById("login-screen").style.display = "block";
+      alert("Modo docente activado: se reinició el bloqueo local para que puedas probar la evaluación. No se bloqueará por salir de pantalla ni se enviarán resultados a la planilla mientras esté activo.");
+    } else {
+      alert("Clave incorrecta.");
+    }
+  };
+
+  // NOTA (14/9/2026): el bloqueo por reintento es por código de alumno,
+  // verificado contra la planilla "Codigos" en el servidor (ver validarCodigo),
+  // no por dispositivo/navegador — un mismo dispositivo puede ser usado por
+  // más de un alumno con códigos distintos.
+  // ACTUALIZADO (19/9/2026): esa protección del servidor NO existe cuando se usa
+  // el respaldo manual "Continuar sin validar" (no hay ningún chequeo contra la
+  // planilla), así que ahí sí hace falta un bloqueo local: si la última entrega
+  // de este dispositivo NO fue validada en línea, se bloquea el reingreso acá.
+  // Si SÍ fue validada en línea, no se bloquea (para no impedir que otro alumno
+  // use el mismo dispositivo con su propio código).
+  function checkAlreadyCompleted(){
+    var done;
+    try{ done = localStorage.getItem(COMPLETED_KEY); }catch(e){ done = null; }
+    if(!done) return false;
+    var info;
+    try{ info = JSON.parse(done); }catch(e){ info = null; }
+    if(info && info.validado === true){
+      return false;
+    }
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("already-done-screen").style.display = "block";
+    return true;
+  }
+
+  // Bloquear reingreso si la última entrega de este dispositivo se hizo sin
+  // validar el código en línea (ver checkAlreadyCompleted)
+  checkAlreadyCompleted();
+
+  // Reintentar envíos pendientes de sesiones anteriores en este mismo navegador
+  retryPendingSubmission();
+
+  // ======= REINGRESO AUTORIZADO POR EL DOCENTE =======
+  // El docente puede habilitar que un alumno vuelva a entrar (por ejemplo, después de
+  // que la evaluación se cerró por salir de la pantalla). El código NO está escrito
+  // acá: solo se guarda una derivación PBKDF2 irreversible para compararlo.
+  var reingresoAutorizado = false;
+  var REINGRESO_SALT = "evaluaciones-reingreso-v1";
+  var REINGRESO_ITER = 200000;
+  var REINGRESO_HASH = "4800451d5cd98e3c7fa58f8cd95b9b8771218aec06e2d0ca600ed2564de86e98";
+
+  function verificarCodigoReingreso(codigo){
+    try{
+      var enc = new TextEncoder();
+      return crypto.subtle.importKey("raw", enc.encode(codigo), "PBKDF2", false, ["deriveBits"])
+        .then(function(clave){
+          return crypto.subtle.deriveBits({name:"PBKDF2", salt:enc.encode(REINGRESO_SALT),
+            iterations:REINGRESO_ITER, hash:"SHA-256"}, clave, 256);
+        })
+        .then(function(bits){
+          var hex = Array.prototype.map.call(new Uint8Array(bits), function(b){
+            return (b < 16 ? "0" : "") + b.toString(16);
+          }).join("");
+          return hex === REINGRESO_HASH;
+        })
+        .catch(function(){ return false; });
+    }catch(e){
+      return Promise.resolve(false);
+    }
+  }
+
+  window.habilitarReingreso = function(){
+    var codigo = prompt("Código de habilitación docente para el reingreso:");
+    if(codigo === null) return;
+    codigo = String(codigo).trim();
+    if(!codigo) return;
+    verificarCodigoReingreso(codigo).then(function(ok){
+      if(!ok){ alert("Código de habilitación incorrecto."); return; }
+      reingresoAutorizado = true;
+      try{ localStorage.removeItem(COMPLETED_KEY); }catch(e){}
+      state.finished = false;
+      state.started = false;
+      state.current = 0;
+      state.answers = new Array(questions.length).fill(null);
+      alumnoValidado = null;
+      var mostrar = {"login-screen":"block", "codigo-step":"block"};
+      ["already-done-screen","result-screen","quiz-screen","confirm-step","manual-step",
+       "codigo-msg","login-screen","codigo-step"].forEach(function(id){
+        var el = document.getElementById(id);
+        if(el) el.style.display = mostrar[id] || "none";
+      });
+      var lo = document.getElementById("lock-overlay");
+      if(lo) lo.style.display = "none";
+      var inp = document.getElementById("in-codigo");
+      if(inp) inp.value = "";
+      alert("Reingreso habilitado. El alumno tiene que volver a ingresar su código y rendir de nuevo. " +
+            "Esta nueva entrega queda marcada como \"reingreso autorizado\" en la planilla.");
+    });
+  };
+
+
+  // ======= EXPLICACIONES (devolución formativa) =======
+  function explicacionPregunta(q, i, ans){ return q.expl || ""; }
+
+  // ======= DEVOLUCIÓN FORMATIVA (la habilita el docente cuando termina la clase) =======
+  // Al terminar, el alumno ve su nota; la tabla con sus respuestas, las correctas y una
+  // explicación de cada punto queda guardada en este dispositivo y se muestra recién
+  // cuando el docente la habilita (para todo el curso a la vez) desde "Habilitar devolución".
+  var DEVOLUCION_KEY = STORAGE_KEY + "_devolucion";
+  var devolucionTimer = null;
+
+  function jsonpDevolucion(params, alTerminar){
+    var cb = "__devol_cb_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
+    var terminado = false;
+    var script = document.createElement("script");
+    var limpiar = function(){
+      terminado = true;
+      try{ window[cb] = function(){}; }catch(e){}
+      if(script.parentNode) script.parentNode.removeChild(script);
+    };
+    var t = setTimeout(function(){ if(!terminado){ limpiar(); alTerminar(null); } }, 20000);
+    window[cb] = function(resp){ if(terminado) return; clearTimeout(t); limpiar(); alTerminar(resp); };
+    var qs = [];
+    for(var k in params){ qs.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k])); }
+    script.src = WEBHOOK_URL + "?" + qs.join("&") + "&callback=" + cb;
+    script.onerror = function(){ if(terminado) return; clearTimeout(t); limpiar(); alTerminar(null); };
+    document.body.appendChild(script);
+  }
+
+  function leerDevoluciones(){
+    try{
+      var x = JSON.parse(localStorage.getItem(DEVOLUCION_KEY) || "[]");
+      return Array.isArray(x) ? x : [];
+    }catch(e){ return []; }
+  }
+  function guardarDevoluciones(lista){
+    try{ localStorage.setItem(DEVOLUCION_KEY, JSON.stringify(lista.slice(-6))); }catch(e){}
+  }
+
+  function textoExplicacion(qData, i){
+    var t = "";
+    try{ t = explicacionPregunta(qData, i, state.answers[i]) || ""; }catch(e){ t = ""; }
+    return t;
+  }
+
+  // Se llama al final de showResult(): agrega la explicación debajo de cada fila,
+  // guarda la devolución en el dispositivo y la oculta hasta que el docente la habilite.
+  function prepararDevolucion(payload){
+    var body = document.getElementById("review-body");
+    var filas = Array.prototype.slice.call(body.children);
+    filas.forEach(function(tr, i){
+      var expl = textoExplicacion(questions[i], i);
+      if(!expl) return;
+      var trE = document.createElement("tr");
+      trE.className = "fila-expl";
+      trE.innerHTML = '<td></td><td colspan="3" class="expl">💡 ' + escapeHtml(expl) + "</td>";
+      tr.parentNode.insertBefore(trE, tr.nextSibling);
+    });
+    var entrada = {
+      nombre: (payload.nombre || "") + " " + (payload.apellido || ""),
+      nota: payload.nota,
+      ts: Date.now(),
+      html: body.innerHTML
+    };
+    if(!state.modoDocente){
+      var lista = leerDevoluciones();
+      lista.push(entrada);
+      guardarDevoluciones(lista);
+    }
+    var tabla = document.getElementById("review-table");
+    var caja = document.getElementById("devolucion-box");
+    if(state.modoDocente){
+      tabla.style.display = "";
+      caja.style.display = "none";
+      return;
+    }
+    tabla.style.display = "none";
+    caja.style.display = "block";
+    caja.innerHTML = "<strong>Devolución pendiente.</strong> Tus respuestas, las correctas y la explicación de cada punto " +
+      "se van a mostrar acá cuando tu docente habilite la devolución (al terminar la clase). Podés dejar esta pantalla abierta " +
+      "o volver a abrir el examen más tarde en este mismo dispositivo.";
+    consultarDevolucion(function(habilitada){
+      if(habilitada){ mostrarTablaDevolucion(); }
+      else { iniciarSondeoDevolucion(); }
+    });
+  }
+
+  function consultarDevolucion(alTerminar){
+    jsonpDevolucion({ accion: "estado_devolucion", tema: TEMA }, function(resp){
+      alTerminar(!!(resp && resp.habilitada));
+    });
+  }
+
+  function iniciarSondeoDevolucion(){
+    if(devolucionTimer) clearInterval(devolucionTimer);
+    devolucionTimer = setInterval(function(){
+      consultarDevolucion(function(habilitada){
+        if(habilitada){ clearInterval(devolucionTimer); devolucionTimer = null; mostrarTablaDevolucion(); }
+      });
+    }, 20000);
+  }
+
+  function mostrarTablaDevolucion(){
+    var tabla = document.getElementById("review-table");
+    var caja = document.getElementById("devolucion-box");
+    tabla.style.display = "";
+    caja.style.display = "block";
+    caja.innerHTML = "<strong>Devolución habilitada.</strong> Revisá cada punto: en verde lo que respondiste bien, en rojo lo que hay que repasar, y la explicación debajo.";
+  }
+
+  // Devoluciones guardadas en este dispositivo (para quien cerró la página antes de que se habilitara)
+  function renderDevolucionesGuardadas(){
+    var cont = document.getElementById("devol-guardadas");
+    if(!cont) return;
+    var lista = leerDevoluciones();
+    if(!lista.length || state.started){ cont.style.display = "none"; cont.innerHTML = ""; return; }
+    cont.style.display = "block";
+    var h = '<div class="card devol-card"><div class="eyebrow">Devolución</div>' +
+      '<p class="lead" style="margin-bottom:10px;">Este dispositivo tiene guardada la devolución de esta evaluación:</p>';
+    lista.forEach(function(d, idx){
+      h += '<div class="btn-row" style="margin-top:6px;"><button class="btn secondary" onclick="verDevolucionGuardada(' + idx + ')">Ver devolución de ' +
+        escapeHtml(String(d.nombre || "").trim() || "alumno") + " (nota " + escapeHtml(String(d.nota).replace(".", ",")) + ")</button></div>";
+    });
+    h += '<div id="devol-guardada-msg" style="margin-top:10px; font-size:13.5px; font-weight:600;"></div>' +
+      '<div id="devol-guardada-tabla" style="display:none;"><table class="review"><thead><tr><th>#</th><th>Pregunta</th><th>Tu respuesta</th><th>Correcta</th></tr></thead>' +
+      '<tbody id="devol-guardada-body"></tbody></table></div></div>';
+    cont.innerHTML = h;
+  }
+
+  window.verDevolucionGuardada = function(idx){
+    var lista = leerDevoluciones();
+    var d = lista[idx];
+    if(!d) return;
+    var msg = document.getElementById("devol-guardada-msg");
+    var wrap = document.getElementById("devol-guardada-tabla");
+    msg.style.color = "";
+    msg.textContent = "Consultando si tu docente ya habilitó la devolución…";
+    wrap.style.display = "none";
+    consultarDevolucion(function(habilitada){
+      if(habilitada){
+        msg.textContent = "Devolución de " + String(d.nombre || "").trim() + " · nota " + String(d.nota).replace(".", ",") + "/10";
+        document.getElementById("devol-guardada-body").innerHTML = d.html;
+        wrap.style.display = "block";
+      } else {
+        msg.style.color = "#7a3a1a";
+        msg.textContent = "Todavía no está habilitada. Tu docente la habilita cuando termina la clase; probá de nuevo más tarde.";
+      }
+    });
+  };
+
+  // Control del docente: habilita (o vuelve a ocultar) la devolución para TODO el curso de una vez.
+  // Panel dentro de la página (sin prompt/confirm, que algunos navegadores del celular bloquean).
+  window.habilitarDevolucion = function(){
+    var viejo = document.getElementById("panel-devolucion");
+    if(viejo) viejo.parentNode.removeChild(viejo);
+    var p = document.createElement("div");
+    p.id = "panel-devolucion";
+    p.style.cssText = "position:fixed;inset:0;background:rgba(40,25,10,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;";
+    p.innerHTML =
+      '<div class="card" style="max-width:420px;width:100%;">' +
+        '<div class="eyebrow">Docente</div>' +
+        '<h2 style="margin:4px 0 8px;">Devolución del examen</h2>' +
+        '<p class="lead" style="font-size:14px;">' + escapeHtml(TEMA) + '</p>' +
+        '<label for="in-clave-devol">Código docente</label>' +
+        '<input type="password" id="in-clave-devol" inputmode="numeric" autocomplete="off" placeholder="Código (solo números)">' +
+        '<div class="btn-row" style="flex-wrap:wrap;gap:8px;">' +
+          '<button class="btn" id="btn-devol-si">Habilitar devolución</button>' +
+          '<button class="btn secondary" id="btn-devol-no">Ocultar devolución</button>' +
+          '<button class="btn secondary" id="btn-devol-cerrar">Cerrar</button>' +
+        '</div>' +
+        '<div id="devol-panel-msg" style="margin-top:12px;font-size:14px;font-weight:600;"></div>' +
+      '</div>';
+    document.body.appendChild(p);
+    var msg = document.getElementById("devol-panel-msg");
+    var enviar = function(valor){
+      var codigo = String(document.getElementById("in-clave-devol").value || "").replace(/\D/g, "");
+      if(!codigo){ msg.style.color = "#a3311b"; msg.textContent = "Escribí el código."; return; }
+      msg.style.color = ""; msg.textContent = "Conectando con la planilla…";
+      document.getElementById("btn-devol-si").disabled = true;
+      document.getElementById("btn-devol-no").disabled = true;
+      jsonpDevolucion({ accion: "habilitar_devolucion", tema: TEMA, clave: codigo, valor: valor }, function(resp){
+        document.getElementById("btn-devol-si").disabled = false;
+        document.getElementById("btn-devol-no").disabled = false;
+        if(resp && resp.ok){
+          msg.style.color = "#215c37";
+          msg.textContent = resp.habilitada
+            ? "✔ Devolución HABILITADA. Los alumnos la ven en menos de un minuto (o al volver a abrir el examen)."
+            : "✔ Devolución OCULTA.";
+        } else if(resp && resp.error === "clave incorrecta"){
+          msg.style.color = "#a3311b"; msg.textContent = "Código incorrecto.";
+        } else {
+          msg.style.color = "#a3311b"; msg.textContent = "No se pudo conectar con la planilla. Probá de nuevo en unos segundos.";
+        }
+      });
+    };
+    document.getElementById("btn-devol-si").onclick = function(){ enviar("1"); };
+    document.getElementById("btn-devol-no").onclick = function(){ enviar("0"); };
+    document.getElementById("btn-devol-cerrar").onclick = function(){ p.parentNode.removeChild(p); };
+  };
+  renderDevolucionesGuardadas();
+
+})();
+</script>
+</body>
+</html>
