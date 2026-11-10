@@ -441,7 +441,7 @@
             parte("Frecuencia (Hz):", cNum(50, 0), "50 Hz", 0.25, true)],
      expl:"En Argentina la red domiciliaria es de 220 V eficaces y 50 Hz (50 ciclos por segundo)."},
 
-    {id:2, type:"parts", q:"Corriente alterna. Una tensión alterna tiene un valor pico de 311 V. Calculá su valor eficaz (Vef = Vp ÷ √2).",
+    {id:2, type:"parts", q:"Corriente alterna. Una tensión alterna tiene un valor pico de 311 V. Calculá su valor eficaz.",
      parts:[parte("Valor eficaz (V):", cNum(219.9, 0.02), "220 V", 0.5, true)],
      expl:"Vef = Vp ÷ √2 = 311 ÷ 1,414 ≈ 220 V. Por eso decimos que la red es de 220 V: es su valor eficaz, aunque el pico llegue a 311 V."},
 
@@ -474,8 +474,8 @@
      expl:"La media onda aprovecha un solo semiciclo: el rizado tiene la misma frecuencia que la red (50 Hz). La onda completa aprovecha los dos semiciclos: el rizado tiene el doble (100 Hz)."},
 
     {id:9, type:"parts", q:"Rectificadores. El secundario de un transformador entrega 12 V eficaces y alimenta un puente rectificador.",
-     parts:[parte("a) Tensión pico del secundario, Vp = Vef × √2 (V):", cNum(16.97, 0.03), "≈ 17 V", 0.25, true),
-            parte("b) Tensión pico sobre la carga, restando 1,4 V de los dos diodos que conducen (V):", cNum(15.57, 0.03), "≈ 15,6 V", 0.25, true)],
+     parts:[parte("a) Tensión pico del secundario (V):", cNum(16.97, 0.03), "≈ 17 V", 0.25, true),
+            parte("b) Tensión pico sobre la carga, teniendo en cuenta la caída en los diodos del puente (V):", cNum(15.57, 0.03), "≈ 15,6 V", 0.25, true)],
      expl:"Vp = 12 × 1,414 ≈ 17 V. En el puente conducen 2 diodos a la vez y cada uno cae ≈0,7 V: 17 − 1,4 ≈ 15,6 V sobre la carga."},
 
     {id:10, type:"parts", q:"Fuentes lineales. Escribí en orden las etapas de una fuente lineal, desde la red hasta la carga: regulador, transformador, filtro, rectificador.",
@@ -497,7 +497,7 @@
             parte("Transformadores e inductores más:", cRaiz(["chic", "pequen", "livian", "reducid", "menor", "compact"]), "chicos (pequeños, livianos)", 1/6)],
      expl:"En la fuente conmutada el transistor funciona como una llave que se prende y apaga miles de veces por segundo (frecuencia mucho mayor que 50 Hz). A mayor frecuencia, los transformadores e inductores pueden ser mucho más chicos y livianos."},
 
-    {id:14, type:"parts", q:"Fuentes conmutadas. El control PWM regula la salida ajustando el ciclo de trabajo (cuánto tiempo está encendido el transistor en cada ciclo).",
+    {id:14, type:"parts", q:"Fuentes conmutadas. El control PWM regula la tensión de salida ajustando el ciclo de trabajo.",
      parts:[parte("a) La carga pide más corriente y la tensión de salida empieza a bajar. ¿El ciclo de trabajo debe AUMENTAR o DISMINUIR?", cRaiz(["aument", "subi", "mayor", "incremen", "agrand"], ["disminu", "baj", "reduc"]), "aumentar", 0.25),
             parte("b) Se desconecta la carga y la tensión de salida empieza a subir. ¿El ciclo de trabajo debe AUMENTAR o DISMINUIR?", cRaiz(["disminu", "baj", "reduc", "menor", "achic"], ["aument", "subi", "incremen"]), "disminuir", 0.25)],
      expl:"Con un ciclo de trabajo mayor, el transistor entrega energía durante más tiempo y la salida sube; con uno menor, la salida baja. El lazo de realimentación lo ajusta solo para mantener la tensión constante."},
@@ -506,7 +506,7 @@
      parts:[parte("Desfasaje (grados):", cNum(120, 0, ["ciento veinte"]), "120°", 0.5, true)],
      expl:"Las tres fases (R, S, T) están desfasadas 120° entre sí: 360° ÷ 3 = 120°."},
 
-    {id:16, type:"parts", q:"Sistemas trifásicos. La tensión de fase es 220 V. Calculá la tensión de línea (VL = √3 × Vf).",
+    {id:16, type:"parts", q:"Sistemas trifásicos. La tensión de fase es 220 V. Calculá la tensión de línea.",
      parts:[parte("Tensión de línea (V):", cNum(381, 0.02), "380 V", 0.5, true)],
      expl:"VL = √3 × Vf = 1,732 × 220 ≈ 380 V. Es la tensión entre dos fases; la de fase (220 V) se mide entre una fase y el neutro."},
 
