@@ -388,7 +388,7 @@
       .replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim() + " ";
   }
   function numDe(s){
-    var m = String(s == null ? "" : s).replace(/(\d),(\d)/g, "$1.$2").match(/-?\d+(\.\d+)?/);
+    var m = String(s == null ? "" : s).replace(/(\d)\s*[.,]\s*(\d)/g, "$1.$2").match(/-?\d+(\.\d+)?/);
     return m ? parseFloat(m[0]) : null;
   }
   // Número con tolerancia relativa (tol = 0.02 → ±2 %); palabras = escrituras aceptadas ("cuatro")
@@ -474,8 +474,8 @@
      expl:"La media onda aprovecha un solo semiciclo: el rizado tiene la misma frecuencia que la red (50 Hz). La onda completa aprovecha los dos semiciclos: el rizado tiene el doble (100 Hz)."},
 
     {id:9, type:"parts", q:"Rectificadores. El secundario de un transformador entrega 12 V eficaces y alimenta un puente rectificador.",
-     parts:[parte("a) Tensión pico del secundario (V):", cNum(16.97, 0.03), "≈ 17 V", 0.25, true),
-            parte("b) Tensión pico sobre la carga, teniendo en cuenta la caída en los diodos del puente (V):", cNum(15.57, 0.03), "≈ 15,6 V", 0.25, true)],
+     parts:[parte("a) Tensión pico del secundario (V):", cNum(16.75, 0.045), "≈ 17 V", 0.25, true),
+            parte("b) Tensión pico sobre la carga, teniendo en cuenta la caída en los diodos del puente (V):", cNum(15.55, 0.0355), "≈ 15,6 V", 0.25, true)],
      expl:"Vp = 12 × 1,414 ≈ 17 V. En el puente conducen 2 diodos a la vez y cada uno cae ≈0,7 V: 17 − 1,4 ≈ 15,6 V sobre la carga."},
 
     {id:10, type:"parts", q:"Fuentes lineales. Escribí en orden las etapas de una fuente lineal, desde la red hasta la carga: regulador, transformador, filtro, rectificador.",
@@ -1331,6 +1331,14 @@
     tabla.style.display = "";
     caja.style.display = "block";
     caja.innerHTML = "<strong>Devolución habilitada.</strong> Revisá cada punto: en verde lo que respondiste bien, en rojo lo que hay que repasar, y la explicación debajo.";
+    try{
+      var corr = buscarCorreccion(state.nombre + " " + state.apellido);
+      if(corr){
+        document.getElementById("score-nota").textContent = notaTexto(corr.nota);
+        document.getElementById("score-detalle").textContent = notaTexto(corr.nota) + " / 10 puntos";
+        caja.innerHTML += htmlCorreccion(corr);
+      }
+    }catch(e){}
   }
 
   // Devoluciones guardadas en este dispositivo (para quien cerró la página antes de que se habilitara)
@@ -1344,12 +1352,31 @@
       '<p class="lead" style="margin-bottom:10px;">Este dispositivo tiene guardada la devolución de esta evaluación:</p>';
     lista.forEach(function(d, idx){
       h += '<div class="btn-row" style="margin-top:6px;"><button class="btn secondary" onclick="verDevolucionGuardada(' + idx + ')">Ver devolución de ' +
-        escapeHtml(String(d.nombre || "").trim() || "alumno") + " (nota " + escapeHtml(String(d.nota).replace(".", ",")) + ")</button></div>";
+        escapeHtml(String(d.nombre || "").trim() || "alumno") + " (nota " + escapeHtml(notaTexto((buscarCorreccion(String(d.nombre || "")) || d).nota)) + ")</button></div>";
     });
     h += '<div id="devol-guardada-msg" style="margin-top:10px; font-size:13.5px; font-weight:600;"></div>' +
       '<div id="devol-guardada-tabla" style="display:none;"><table class="review"><thead><tr><th>#</th><th>Pregunta</th><th>Tu respuesta</th><th>Correcta</th></tr></thead>' +
       '<tbody id="devol-guardada-body"></tbody></table></div></div>';
     cont.innerHTML = h;
+  }
+
+  // ======= CORRECCIONES DE NOTA (12/11/2026) =======
+  // Respuestas que estaban bien pero el sistema no las leyó por cómo se escribió el número
+  // (espacio después del punto o la coma, aproximaciones). Se identifica al alumno por su nombre.
+  var CORRECCIONES = {
+    "c2298127578": {"nota":"7","antes":"6.75","msg":"En el cálculo de la tensión pico sobre la carga escribiste «15», que es una aproximación válida del resultado. Se te sumaron 0,25 puntos."},
+    "c4002740104": {"nota":"7.67","antes":"7.42","msg":"En el cálculo de la tensión pico sobre la carga escribiste «15», que es una aproximación válida del resultado. Se te sumaron 0,25 puntos."},
+    "c2223839933": {"nota":"6.42","antes":"6.17","msg":"En el cálculo de la tensión pico sobre la carga escribiste «15», que es una aproximación válida del resultado. Se te sumaron 0,25 puntos."}
+  };
+  function buscarCorreccion(nombreCompleto){
+    var clave = "c" + hashTexto("integradora8|" + normNombre(nombreCompleto).split(" ").sort().join(" "));
+    return CORRECCIONES.hasOwnProperty(clave) ? CORRECCIONES[clave] : null;
+  }
+  function notaTexto(n){ return String(n).replace(".", ","); }
+  function htmlCorreccion(c){
+    return '<div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:#e8f3e6;border:1px solid #b9d8b3;color:#2a5a24;font-size:13.5px;font-weight:600;">' +
+      'Tu nota fue corregida: ' + escapeHtml(notaTexto(c.antes)) + ' → ' + escapeHtml(notaTexto(c.nota)) + ' / 10.<br>' +
+      '<span style="font-weight:500;">' + escapeHtml(c.msg) + '</span></div>';
   }
 
   window.verDevolucionGuardada = function(idx){
@@ -1363,7 +1390,12 @@
     wrap.style.display = "none";
     consultarDevolucion(function(habilitada){
       if(habilitada){
-        msg.textContent = "Devolución de " + String(d.nombre || "").trim() + " · nota " + String(d.nota).replace(".", ",") + "/10";
+        var corr = buscarCorreccion(String(d.nombre || ""));
+        if(corr){
+          msg.innerHTML = escapeHtml("Devolución de " + String(d.nombre || "").trim() + " · nota corregida " + notaTexto(corr.nota) + "/10") + htmlCorreccion(corr);
+        } else {
+          msg.textContent = "Devolución de " + String(d.nombre || "").trim() + " · nota " + String(d.nota).replace(".", ",") + "/10";
+        }
         document.getElementById("devol-guardada-body").innerHTML = d.html;
         wrap.style.display = "block";
       } else {
