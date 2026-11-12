@@ -540,10 +540,9 @@
      expl:"a) 110010 = 32 + 16 + 2 = 50 (se suman las potencias de 2 donde hay un 1). b) El complemento invierte cada bit: los 0 pasan a 1 y los 1 a 0 ⇒ 0110 → 1001."},
 
     {id:18, type:"parts", q:"Electrónica digital. Resolvé cada operación.",
-     parts:[parte("a) Suma lógica (álgebra de Boole): 1 + 1 =", cBits("1"), "1", 1/6, true),
-            parte("b) Suma binaria (aritmética): 1 + 1 =", cBits("10"), "10", 1/6, true),
-            parte("c) Producto lógico: 1 · 0 =", cBits("0"), "0", 1/6, true)],
-     expl:"En el álgebra de Boole la suma lógica es la operación OR: basta un 1 para que el resultado sea 1, así que 1 + 1 = 1. En la suma binaria (aritmética) 1 + 1 = 10 (es el 2 en binario: 0 y me llevo 1). El producto lógico es la operación AND: da 1 solo si todos valen 1, así que 1 · 0 = 0."},
+     parts:[parte("a) Suma lógica (álgebra de Boole): 1 + 1 =", cBits("1"), "1", 0.25, true),
+            parte("b) Producto lógico: 1 · 0 =", cBits("0"), "0", 0.25, true)],
+     expl:"En el álgebra de Boole la suma lógica es la operación OR: basta un 1 para que el resultado sea 1, así que 1 + 1 = 1 (¡no es una suma aritmética!). El producto lógico es la operación AND: da 1 solo si todos valen 1, así que 1 · 0 = 0."},
 
     {id:19, type:"parts", q:"Electrónica digital. Escribí la salida Y de una compuerta NAND para cada combinación de entradas.",
      parts:[parte("a) A = 0, B = 0  →  Y =", cBits("1"), "1", 0.25, true),
