@@ -459,6 +459,42 @@
     };
   }
 
+  // Palabra parecida (mayúsculas, acentos y errores de tipeo): compara cada palabra de la respuesta
+  // con las formas aceptadas usando distancia de edición (dist = errores tolerados)
+  function lev(a, b){
+    var m = a.length, n = b.length, d = [], i, j;
+    for(i=0;i<=m;i++){ d[i] = [i]; }
+    for(j=0;j<=n;j++){ d[0][j] = j; }
+    for(i=1;i<=m;i++){ for(j=1;j<=n;j++){
+      d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    } }
+    return d[m][n];
+  }
+  function cParecido(formas, dist, raices){
+    return function(t){
+      var n = nt(t);
+      if(raices){ for(var r=0;r<raices.length;r++){ if(n.indexOf(raices[r]) >= 0) return true; } }
+      var pal = n.trim().split(" "), junto = n.replace(/ /g, "");
+      pal.push(junto);
+      for(var k=0;k<pal.length;k++){
+        for(var f=0;f<formas.length;f++){
+          if(pal[k] && lev(pal[k], formas[f]) <= dist) return true;
+        }
+      }
+      return false;
+    };
+  }
+  // Desventaja del IGBT: conmuta más lento / trabaja a menor frecuencia
+  function cIGBTLento(){
+    var base = cRaiz(["lent", "menor frecuencia", "menos frecuencia", "frecuencia menor", "frecuencias menores", "baja frecuencia", "bajas frecuencias", "frecuencia mas baja", "frecuencias mas bajas", "menos rapid", "menor rapid", "menos veloc", "menor veloc", "velocidad menor", "velocidad es menor", "velocidad mas baja", "tiempo de apagado", "tiempo de conmutacion", "cola", "tarda", "demora", "retardo", "mas tiempo", "no es tan rapid", "no tan rapid", "no conmuta tan"]);
+    return function(t){
+      var n = nt(t);
+      if(base(t)) return true;
+      // "no sirve / no trabaja a alta frecuencia", "no llega a frecuencias altas"
+      if(/ no /.test(n) && /(alta|altas|elevada|elevadas|mucha|grande) frecuencia|frecuencias? (alta|altas|elevadas?)/.test(n)) return true;
+      return false;
+    };
+  }
   // Todos los números de la respuesta (acepta "0, 6", "0. 6", "entre 400 y 800")
   function numerosDe(s){
     var t = String(s == null ? "" : s).replace(/(\d)\s*[.,]\s*(\d)/g, "$1.$2");
@@ -555,9 +591,9 @@
      expl:"a) Un diodo común conduce en polarización directa: ánodo al positivo y cátodo al negativo, superando la barrera de potencial. b) El Zener se usa en polarización inversa: al llegar a su tensión Zener conduce y mantiene la tensión casi constante."},
 
     {id:9, type:"parts", q:"Diodos. Nombrá el tipo de diodo que corresponde a cada descripción.",
-     parts:[parte("a) Emite luz cuando circula corriente en directa:", cRaiz([" led ", "emisor de luz", "emisores de luz", "electroluminis", "diodo luminoso"]), "LED", 1/6),
-            parte("b) Se usa para regular (estabilizar) una tensión:", cRaiz(["zener", "zenner"]), "Zener", 1/6),
-            parte("c) Conmuta muy rápido y tiene una caída de tensión menor que el de silicio común:", cRaiz(["schottky", "shottky", "schotky", "shotky", "schotki", "shotki", "schottki", "skottky"]), "Schottky", 1/6)],
+     parts:[parte("a) Emite luz cuando circula corriente en directa:", cParecido(["led", "leds"], 0, ["emisor de luz", "emisores de luz", "emite luz", "electroluminis", "diodo luminoso", " l e d ", "leed", "lled"]), "LED", 1/6),
+            parte("b) Se usa para regular (estabilizar) una tensión:", cParecido(["zener"], 2, ["zen"]), "Zener", 1/6),
+            parte("c) Conmuta muy rápido y tiene una caída de tensión menor que el de silicio común:", cParecido(["schottky"], 3, ["schot", "shot", "chotk", "skot", "scott"]), "Schottky", 1/6)],
      expl:"a) El LED (diodo emisor de luz) convierte la energía eléctrica en luz. b) El Zener se usa como regulador de tensión. c) El Schottky tiene una unión metal-semiconductor: cae menos (≈0,3 V) y conmuta muy rápido."},
 
     {id:10, type:"parts", q:"Diodos. En casi todos los circuitos con LED se conecta una resistencia en serie con él. ¿Para qué se la usa?",
@@ -609,8 +645,8 @@
      expl:"a) El Gate está aislado del canal por una capa finísima de óxido (dióxido de silicio), por eso no circula corriente de Gate. b) Esa capa se perfora con facilidad: la electricidad estática puede dañarlo, por eso se usa pulsera antiestática."},
 
     {id:20, type:"parts", q:"IGBT. Respondé sobre el transistor bipolar de compuerta aislada.",
-     parts:[parte("a) Nombrá una aplicación típica del IGBT:", cRaiz(["variador", "motor", "traccion", "inversor", "alta potencia", "soldador", "tren", "industri", "potencia"]), "variadores de velocidad de motores / alta potencia", 0.25),
-            parte("b) ¿Qué desventaja tiene frente al MOSFET?", cRaiz(["lent", "menor frecuencia", "baja frecuencia", "menos rapid", "menos veloc", "tiempo de apagado", "cola"]), "conmuta más lento", 0.25)],
+     parts:[parte("a) Nombrá una aplicación típica del IGBT:", cRaiz(["variador", "motor", "velocidad", "traccion", "inversor", "inverter", "convertidor", "alta potencia", "potencia", "alta corriente", "alta tension", "soldad", "tren", "ascensor", "industri", "maquina", "fuente", "ups", "auto electric", "vehiculo", "electric", "induccion", "horno", "cocina", "aire acondicionado", "lavarropa", "heladera", "compresor", "bomba", "calefac", "solar", "panel", "eolic"]), "variadores de velocidad de motores / alta potencia", 0.25),
+            parte("b) ¿Qué desventaja tiene frente al MOSFET?", cIGBTLento(), "conmuta más lento", 0.25)],
      expl:"a) El IGBT combina la entrada aislada del MOSFET con la capacidad de potencia del BJT: se usa en alta potencia, por ejemplo en variadores de velocidad de motores trifásicos. b) Su desventaja frente al MOSFET es que conmuta más lento, por eso no sirve para frecuencias muy altas."}
   ];
 
@@ -1126,22 +1162,29 @@
     body.innerHTML = "";
     questions.forEach(function(qData, i){
       var tr = document.createElement("tr");
-      var tuResp, correcta;
+      var tuResp, correcta, tuRespHtml = null;
       if(qData.type === "parts"){
         var ap = state.answers[i] || [];
-        tuResp = qData.parts.map(function(pp, pi){
-          var v = (ap[pi] && String(ap[pi]).trim()) ? String(ap[pi]).trim() : "(sin responder)";
-          return qData.parts.length > 1 ? (pi+1) + ") " + v : v;
-        }).join("  ");
+        // Cada parte se marca por separado: verde ✔ si está bien, rojo ✘ si está mal
+        tuRespHtml = qData.parts.map(function(pp, pi){
+          var crudo = (ap[pi] !== null && ap[pi] !== undefined) ? String(ap[pi]).trim() : "";
+          var v = crudo ? crudo : "(sin responder)";
+          var ok = !!crudo && pp.check(crudo);
+          var txt = (qData.parts.length > 1 ? (pi+1) + ") " : "") + v;
+          return '<span class="' + (ok ? "ans-ok" : "ans-bad") + '">' + (ok ? "✔ " : "✘ ") + escapeHtml(txt) + "</span>";
+        }).join("<br>");
         correcta = qData.parts.map(function(pp, pi){
           return qData.parts.length > 1 ? (pi+1) + ") " + pp.show : pp.show;
         }).join("  ");
       } else if(qData.type === "fill"){
         var a = state.answers[i] || [];
-        tuResp = qData.blanks.map(function(b, bi){
-          var v = (a[bi] && String(a[bi]).trim()) ? String(a[bi]).trim() : "(sin responder)";
-          return qData.blanks.length > 1 ? (bi+1) + ") " + v : v;
-        }).join("  ");
+        tuRespHtml = qData.blanks.map(function(b, bi){
+          var crudo = a[bi] ? String(a[bi]).trim() : "";
+          var v = crudo ? crudo : "(sin responder)";
+          var ok = !!crudo && b.check(a[bi]);
+          var txt = (qData.blanks.length > 1 ? (bi+1) + ") " : "") + v;
+          return '<span class="' + (ok ? "ans-ok" : "ans-bad") + '">' + (ok ? "✔ " : "✘ ") + escapeHtml(txt) + "</span>";
+        }).join("<br>");
         correcta = qData.blanks.map(function(b, bi){
           return qData.blanks.length > 1 ? (bi+1) + ") " + b.show : b.show;
         }).join("  ");
@@ -1153,7 +1196,9 @@
       tr.innerHTML =
         "<td>" + (i+1) + "</td>" +
         "<td>" + escapeHtml(qData.q) + "</td>" +
-        '<td class="' + (esCorrecta ? "ans-ok" : "ans-bad") + '">' + escapeHtml(tuResp) + "</td>" +
+        (tuRespHtml !== null
+          ? "<td>" + tuRespHtml + "</td>"
+          : '<td class="' + (esCorrecta ? "ans-ok" : "ans-bad") + '">' + escapeHtml(tuResp) + "</td>") +
         "<td>" + escapeHtml(correcta) + "</td>";
       body.appendChild(tr);
     });
