@@ -1067,22 +1067,29 @@
     body.innerHTML = "";
     questions.forEach(function(qData, i){
       var tr = document.createElement("tr");
-      var tuResp, correcta;
+      var tuResp, correcta, tuRespHtml = null;
       if(qData.type === "parts"){
         var ap = state.answers[i] || [];
-        tuResp = qData.parts.map(function(pp, pi){
-          var v = (ap[pi] && String(ap[pi]).trim()) ? String(ap[pi]).trim() : "(sin responder)";
-          return qData.parts.length > 1 ? (pi+1) + ") " + v : v;
-        }).join("  ");
+        // Cada parte se marca por separado: verde ✔ si está bien, rojo ✘ si está mal
+        tuRespHtml = qData.parts.map(function(pp, pi){
+          var crudo = (ap[pi] !== null && ap[pi] !== undefined) ? String(ap[pi]).trim() : "";
+          var v = crudo ? crudo : "(sin responder)";
+          var ok = !!crudo && pp.check(crudo);
+          var txt = (qData.parts.length > 1 ? (pi+1) + ") " : "") + v;
+          return '<span class="' + (ok ? "ans-ok" : "ans-bad") + '">' + (ok ? "✔ " : "✘ ") + escapeHtml(txt) + "</span>";
+        }).join("<br>");
         correcta = qData.parts.map(function(pp, pi){
           return qData.parts.length > 1 ? (pi+1) + ") " + pp.show : pp.show;
         }).join("  ");
       } else if(qData.type === "fill"){
         var a = state.answers[i] || [];
-        tuResp = qData.blanks.map(function(b, bi){
-          var v = (a[bi] && String(a[bi]).trim()) ? String(a[bi]).trim() : "(sin responder)";
-          return qData.blanks.length > 1 ? (bi+1) + ") " + v : v;
-        }).join("  ");
+        tuRespHtml = qData.blanks.map(function(b, bi){
+          var crudo = a[bi] ? String(a[bi]).trim() : "";
+          var v = crudo ? crudo : "(sin responder)";
+          var ok = !!crudo && b.check(a[bi]);
+          var txt = (qData.blanks.length > 1 ? (bi+1) + ") " : "") + v;
+          return '<span class="' + (ok ? "ans-ok" : "ans-bad") + '">' + (ok ? "✔ " : "✘ ") + escapeHtml(txt) + "</span>";
+        }).join("<br>");
         correcta = qData.blanks.map(function(b, bi){
           return qData.blanks.length > 1 ? (bi+1) + ") " + b.show : b.show;
         }).join("  ");
@@ -1094,7 +1101,9 @@
       tr.innerHTML =
         "<td>" + (i+1) + "</td>" +
         "<td>" + escapeHtml(qData.q) + "</td>" +
-        '<td class="' + (esCorrecta ? "ans-ok" : "ans-bad") + '">' + escapeHtml(tuResp) + "</td>" +
+        (tuRespHtml !== null
+          ? "<td>" + tuRespHtml + "</td>"
+          : '<td class="' + (esCorrecta ? "ans-ok" : "ans-bad") + '">' + escapeHtml(tuResp) + "</td>") +
         "<td>" + escapeHtml(correcta) + "</td>";
       body.appendChild(tr);
     });
