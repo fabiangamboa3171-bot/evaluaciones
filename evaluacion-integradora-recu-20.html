@@ -1412,7 +1412,12 @@
   // ======= CORRECCIONES DE NOTA (12/11/2026) =======
   // Respuestas que estaban bien pero el sistema no las leyó por cómo se escribió el número
   // (espacio después del punto o la coma, aproximaciones). Se identifica al alumno por su nombre.
-  var CORRECCIONES = {};
+  var CORRECCIONES = {
+    "c2627350129": {"nota":"6.83","antes":"6.33","msg":"En el orden de las etapas de la fuente escribiste el recorrido de la red a la carga (al revés de lo pedido), pero el orden es correcto. Se te sumaron 0,5 puntos."},
+    "c1875506070": {"nota":"8.25","antes":"7.75","msg":"En el orden de las etapas de la fuente escribiste el recorrido de la red a la carga (al revés de lo pedido), pero el orden es correcto. Se te sumaron 0,5 puntos."},
+    "c1371286916": {"nota":"6.75","antes":"6.25","msg":"En el orden de las etapas de la fuente escribiste el recorrido de la red a la carga (al revés de lo pedido), pero el orden es correcto. Se te sumaron 0,5 puntos."},
+    "c3381742205": {"nota":"9.75","antes":"9.58","msg":"En el dimmer escribiste «ADELNTAR»: es un error de tipeo y la respuesta es correcta. Se te sumaron 0,17 puntos."}
+  };
   function buscarCorreccion(nombreCompleto){
     var clave = "c" + hashTexto("recuintegradora8|" + normNombre(nombreCompleto).split(" ").sort().join(" "));
     return CORRECCIONES.hasOwnProperty(clave) ? CORRECCIONES[clave] : null;
